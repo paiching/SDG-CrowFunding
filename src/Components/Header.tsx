@@ -13,13 +13,19 @@ export default function Header() {
           <div className={styles.logo}>SDG 募資平台</div>
         </Link>
         <div className={styles.menuItem}>
-          <Link to="/no-poverty">
+          <Link to="/explore">
             <div className={styles.link}>探索</div>
           </Link>
-          <Link to="/explore">
+          <Link to="/propose">
             <div className={styles.link}>提案</div>
           </Link>
-          <Link to="/about">
+          <Link to="/showcase">
+            <div className={styles.link}>成果</div>
+          </Link>
+          <Link to="/contracts">
+            <div className={styles.link}>NFT</div>
+          </Link>
+          <Link to="/contracts">
             <div className={styles.link}>關於</div>
           </Link>
         </div>

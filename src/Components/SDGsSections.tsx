@@ -1,8 +1,6 @@
 // components/SDGsSections.tsx
 import React from 'react';
-import Image from 'next/image';
-import { useRouter } from 'next/router';
-import styles from './SDGsSection.module.scss'; // Import the CSS module
+import styles from './SdgsSection.module.scss'; // Import the CSS module
 
 interface Goal {
   id: number;
@@ -34,12 +32,11 @@ const goals: Goal[] = [
   // ... (populate this array with real goal data)
 ];
 
-const SDGsSection: React.FC = () => {
-  const router = useRouter();
-
-  const handleSDGClick = (linkUrl: string) => {
-    router.push(linkUrl);
-  };
+export default function SDGsSection() {
+ 
+  // const handleSDGClick = (linkUrl: string) => {
+  //   window.location.href = linkUrl;
+  // };
 
   return (
     <section className={styles.sdgsSection}>
@@ -56,7 +53,7 @@ const SDGsSection: React.FC = () => {
       </div>
     </section>
   );
-};
+}
 
 
-export default SDGsSection;
+
