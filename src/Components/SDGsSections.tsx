@@ -1,6 +1,6 @@
 // components/SDGsSections.tsx
 import React from 'react';
-import styles from './SdgsSection.module.scss'; // Import the CSS module
+import styles from './SDGsSection.module.scss'; // Import the CSS module
 
 interface Goal {
   id: number;
