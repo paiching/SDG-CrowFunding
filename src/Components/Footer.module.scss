@@ -1,0 +1,84 @@
+// Footer.module.scss
+.siteFooter {
+  margin-top: 150px;
+  background-color: #cfcfcf;
+  color: #000000;
+  padding: 20px 0;
+  font-family: Arial, sans-serif;
+}
+
+.footerContainer {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 15%;
+  flex-wrap: wrap;
+}
+
+.footerColumn {
+  margin: 10px 0;
+}
+
+.footerColumn h4 {
+  margin-bottom: 15px;
+}
+
+.footerColumn ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footerColumn ul li {
+  margin-bottom: 10px;
+}
+
+.footerSocial {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.footerSocial a {
+  color: #282727;
+  text-decoration: none;
+}
+
+.footerInfo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+  font-size: 0.8em;
+  flex-direction: column;
+}
+
+.footerInfo span,
+.footerInfo div {
+  margin: 5px 0;
+}
+
+.footerLine {
+  height: 1px;
+  background-color: #e6e4e4;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .footerContainer {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .footerColumn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .footerSocial {
+    margin-bottom: 20px;
+  }
+
+  .footerInfo {
+    flex-direction: column;
+  }
+}

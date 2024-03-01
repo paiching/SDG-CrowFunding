@@ -41,15 +41,18 @@ export default function SDGsSection() {
   return (
     <section className={styles.sdgsSection}>
       <div className={styles.sdgsTitle}>SDGs (Sustainable Development Goals) 聯合國永續發展目標</div>
-      <div>
       <div className={styles.sdgsContainer}>
-        {goals.map((goal, index) => (
-          <div key={index} className={styles.sdgCard} >
-            <img src={goal.imageUrl} alt={goal.title} className="{styles.sdgIcon} block p-2 text-center transition duration-300 ease-in-out transform hover:scale-105" />
+        {goals.map((goal) => (
+          <div key={goal.id} className={styles.sdgCard}>
+            <img 
+              src={goal.imageUrl} 
+              alt={goal.title} 
+              // Assuming you have defined `sdgIcon` in your SCSS module
+              className={`${styles.sdgIcon}`} 
+            />
             <p className={styles.sdgTitle}>{goal.title}</p>
           </div>
         ))}
-        </div>
       </div>
     </section>
   );

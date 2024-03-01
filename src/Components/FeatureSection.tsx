@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import styles from './FeatureSection.module.scss';
 
 const images = [
-  '/images/planet-earth.jpg', // Replace with your image paths
+  //'/images/planet-earth.jpg', // Replace with your image paths
   //'/images/river.jpg',
   //'/images/sdg_icon.png',
   // ...add as many images as you like
@@ -13,13 +13,13 @@ export default function FeatureSection() {
 
   const [activeIndex, setActiveIndex] = useState(0);
 
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      setActiveIndex((current) => (current === images.length - 1 ? 0 : current + 1));
-    }, 5000); // Change image every 3 seconds
+  // useEffect(() => {
+  //   const intervalId = window.setInterval(() => {
+  //     setActiveIndex((current) => (current === images.length - 1 ? 0 : current + 1));
+  //   }, 5000); // Change image every 3 seconds
 
-    return () => clearInterval(intervalId);
-  }, []);
+  //   return () => clearInterval(intervalId);
+  // }, []);
 
   return (
     <section className={styles.featureSection} style={{ backgroundImage: `url(${images[activeIndex]})` }}>
