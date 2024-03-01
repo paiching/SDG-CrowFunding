@@ -69,3 +69,59 @@
 .header a:active {
   text-decoration: none;
 }
+
+
+
+.hamburger {
+  display: none; // Hide by default, show in mobile view
+  flex-direction: column;
+  justify-content: space-around;
+  width: 2rem;
+  height: 2rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 10;
+
+  &:focus {
+    outline: none;
+  }
+
+  .hamburgerLine {
+    width: 2rem;
+    height: 0.25rem;
+    background: #333;
+    border-radius: 10px;
+    transition: all 0.3s linear;
+    position: relative;
+    transform-origin: 1px;
+  }
+}
+
+.menuOpen {
+  transform: translateX(0);
+}
+
+@media (max-width: 768px) {
+  .menuItem {
+    display: none;
+  }
+
+  .menuItem.menuOpen {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: #fff;
+    height: 100vh;
+    width: 250px;
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .hamburger {
+    display: flex;
+  }
+}

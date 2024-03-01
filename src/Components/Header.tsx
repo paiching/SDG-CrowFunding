@@ -5,6 +5,11 @@ import styles from './Header.module.scss';
 
 export default function Header() {
   const [balanceDec, setBalanceDec] = useState(new Decimal(0));
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
 
   return (
     <div className={styles.header}>
@@ -12,7 +17,7 @@ export default function Header() {
         <Link to="/">
           <div className={styles.logo}>SDG 募資平台</div>
         </Link>
-        <div className={styles.menuItem}>
+         <div className={`${styles.menuItem} ${isMenuOpen ? styles.menuOpen : ''}`}>
           <Link to="/explore">
             <div className={styles.link}>探索</div>
           </Link>
@@ -29,6 +34,11 @@ export default function Header() {
             <div className={styles.link}>關於</div>
           </Link>
         </div>
+        <button className={styles.hamburger} onClick={toggleMenu}>
+          <span className={styles.hamburgerLine}></span>
+          <span className={styles.hamburgerLine}></span>
+          <span className={styles.hamburgerLine}></span>
+        </button>
       </div>
       <div className={styles.account}>
         <p className={styles.balance}>Balance: {balanceDec.toFixed(2)}</p>
