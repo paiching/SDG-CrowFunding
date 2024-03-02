@@ -57,7 +57,10 @@ particle.setERC4337(true);
 
 const SignIn = ()=>{
   //const [userInfo, setUserInfo] = useState(null);
-  const [userInfo, setUserInfo] = useAuth();
+  
+  console.log(useAuth()); // Add this line to log the output of useAuth
+  const { userInfo, setUserInfo } = useAuth();
+
   const [caAddress, setCaAddress] = useState(null);
   const [eoaAddress, setEoaAddress] = useState(null);
   const [ethBalance, setEthBalance] = useState();
