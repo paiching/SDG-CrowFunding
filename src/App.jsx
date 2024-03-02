@@ -7,8 +7,18 @@ import Home from './Pages/Home'; // 調整路徑以匹配你的結構
 import Contracts from './Pages/Contracts.jsx';
 import ProposalForm from './Components/ProposalForm.tsx'
 import ProposalPage from './Pages/ProposalPage.tsx'
+import CartPage from './Pages/CartPage.tsx';
+import ItemsPage from './Pages/ItemsPage.jsx';
 
 const App = ()=>{
+  const [cartItems, setCartItems] = useState([]);
+
+  const addToCart = (item, quantity) => {
+    setCartItems((prevItems) => [
+      ...prevItems,
+      { ...item, quantity }
+    ]);
+  };
 
   return (
   
@@ -21,6 +31,8 @@ const App = ()=>{
       <Route path="/contracts" element={<Contracts />} />
       <Route path="/propose" element={<ProposalForm />} />
       <Route path="/explore" element={<ProposalPage />} />
+      <Route path="/items" element={<ItemsPage />} />
+     
         {/* <Route path="/" element={<HomePage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} /> */}

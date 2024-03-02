@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './FeatureSection.module.scss';
 
+
 const images = [
   //'/images/planet-earth.jpg', // Replace with your image paths
   //'/images/river.jpg',
@@ -12,6 +13,7 @@ const images = [
 export default function FeatureSection() {
 
   const [activeIndex, setActiveIndex] = useState(0);
+  
 
   // useEffect(() => {
   //   const intervalId = window.setInterval(() => {
@@ -20,6 +22,8 @@ export default function FeatureSection() {
 
   //   return () => clearInterval(intervalId);
   // }, []);
+    // Function to toggle the mint popup visibility
+
 
   return (
     <section className={styles.featureSection} style={{ backgroundImage: `url(${images[activeIndex]})` }}>
@@ -36,7 +40,7 @@ export default function FeatureSection() {
         </div>
         <div className={styles.mtop10px}><p>完成任務並解鎖NFT</p>
           <div className={styles.mtop20px}>
-            <button className={styles.button}>鑄幣贊助</button>
+            <button className={styles.button} >Mint</button>
             <button className={styles.button}>我要提案</button>
           </div>  
         {/* <Link href="/explore">
@@ -45,6 +49,7 @@ export default function FeatureSection() {
         </div>
         {/* <p>目前兌換 1 ETH : 30 SDG</p> */}
       </div>
+ 
     </section>
   );
 };
