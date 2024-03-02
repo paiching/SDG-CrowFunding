@@ -90,10 +90,15 @@ const SignIn = ()=>{
 
   };
 
-  const handleLogin = async (preferredAuthType) =>{
-    const user = !particle.auth.isLogin()? await particle.auth.login({preferredAuthType}) : particle.auth.getUserInfo();
-    setUserInfo(user);
-  }
+  const handleLogin = async (preferredAuthType) => {
+    try {
+      const user = !particle.auth.isLogin() ? await particle.auth.login({preferredAuthType}) : particle.auth.getUserInfo();
+      setUserInfo(user);
+    } catch (error) {
+      console.error("Login failed:", error);
+      // Handle the error accordingly, possibly setting an error state and displaying a message to the user.
+    }
+  };
 
   const executeUserOpAndGasNativeByUser = async ()=>{
     const tokenAddress = "0x84bC8e38798B0a8B10ff6715d0Aa9E3aDaD19Fad";
