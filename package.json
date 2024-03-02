@@ -25,6 +25,7 @@
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
     "bignumber.js": "^9.1.2",
+    "bootstrap": "^5.3.3",
     "ethers": "5.7.2",
     "framer-motion": "^10.16.4",
     "react": "^18.2.0",
