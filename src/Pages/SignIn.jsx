@@ -255,13 +255,13 @@ const SignIn = ()=>{
 
     //check CA balance
     const contractAddress = "0x84bC8e38798B0a8B10ff6715d0Aa9E3aDaD19Fad";
-    const contractABI = require('../contractAbi_SDGs.json');
+    const contractABI = require('./contractAbi_SDGs.json');
  
     const INFURA_ID = "3869e5d0a7ef4190b30686ff26767689";
     const provider = new ethers.providers.JsonRpcProvider(`https://sepolia.infura.io/v3/${INFURA_ID}`);
 
     const contractInstance = new ethers.Contract(contractAddress, contractABI, provider);
- 
+    console.log(contractInstance);
 
   }
 
