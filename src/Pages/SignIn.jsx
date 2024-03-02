@@ -4,6 +4,7 @@ import {ParticleProvider} from '@particle-network/provider';
 import { EthereumSepolia } from '@particle-network/chains';
 import {AAWrapProvider, SmartAccount, SendTransactionMode} from '@particle-network/aa';
 import {ethers} from 'ethers';
+import { useAuth } from '../AuthContext';
 
 import { 
   Flex, 
@@ -55,7 +56,8 @@ SendTransactionMode.Gasless), 'any');
 particle.setERC4337(true);
 
 const SignIn = ()=>{
-  const [userInfo, setUserInfo] = useState(null);
+  //const [userInfo, setUserInfo] = useState(null);
+  const [userInfo, setUserInfo] = useAuth();
   const [caAddress, setCaAddress] = useState(null);
   const [eoaAddress, setEoaAddress] = useState(null);
   const [ethBalance, setEthBalance] = useState();

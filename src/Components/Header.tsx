@@ -27,7 +27,7 @@ export default function Header() {
           <Link to="/showcase">
             <div className={styles.link}>成果</div>
           </Link>
-          <Link to="/contracts">
+          <Link to="/products">
             <div className={styles.link}>NFT</div>
           </Link>
           <Link to="/contracts">
@@ -42,6 +42,7 @@ export default function Header() {
       </div>
       <div className={styles.account}>
         <p className={styles.balance}>Balance: {balanceDec.toFixed(2)}</p>
+        <p className={styles.balance}>購物車</p>
         <p className={styles.balance}>
           <Link to="/signin">
             <div className={styles.link}>登入</div>
