@@ -9,7 +9,9 @@ const ProposalForm = () => {
     proposalStartDate: '',
     proposalEndDate: '',
     proposalDetail: '',
-    proposalDetails: [{ detail: '' }] // 将 proposalDetail 改为数组
+    proposalDetails: [{ detail: '' }] ,// 将 proposalDetail 改为数组
+    userName:'',
+    contact:''
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>, index: number) => {
@@ -54,6 +56,17 @@ const ProposalForm = () => {
   return (
     <div className={styles.wrapper}>
     <form onSubmit={handleSubmit} className={styles.formContainer}>
+    <div className={styles.formGroup}>
+        <label htmlFor="userName" className={styles.label}>真實姓名</label>
+        <input
+          id="userName"
+          type="text"
+          name="userName"
+          value={formData.userName}
+          onChange={handleInputChangeEvent}
+          className={styles.input}
+        />
+      </div>
       <div className={styles.formGroup}>
         <label htmlFor="proposalName" className={styles.label}>提案名稱</label>
         <input

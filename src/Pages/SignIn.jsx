@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import {ParticleNetwork} from '@particle-network/auth';
 import {ParticleProvider} from '@particle-network/provider';
-import { PolygonMumbai } from '@particle-network/chains';
+import { EthereumSepolia } from '@particle-network/chains';
 import {AAWrapProvider, SmartAccount, SendTransactionMode} from '@particle-network/aa';
 import {ethers} from 'ethers';
 
@@ -28,8 +28,8 @@ const config = {
 
 const particle = new ParticleNetwork({
     ...config,
-    chainName: PolygonMumbai.name,
-    chainId: PolygonMumbai.id,
+    chainName: EthereumSepolia.name,
+    chainId: EthereumSepolia.id,
     wallet: {displayWalletEntry: true, uiMode: 'dark',}
 });
 
@@ -37,11 +37,11 @@ const smartAccount = new SmartAccount(new ParticleProvider(particle.auth), {
   ...config,
   aaOptions:{
     biconomy: [{
-      chainId: PolygonMumbai.id,
+      chainId: EthereumSepolia.id, //PolygonMumbai
       version: '1.0.0',
     }],
     paymasterApiKeys: [{
-      chainId: PolygonMumbai.id,
+      chainId: EthereumSepolia.id,
       apiKey: process.env.REACT_APP_BICONOMY_KEY,
 
   }]
@@ -100,8 +100,8 @@ const SignIn = ()=>{
     const ERC20_ABI = require('../erc20Abi.json');
     const ERC721_ABI = require('../erc721Abi.json');
 
-    const INFURA_ID = "803d8c704fb1402183256652496311e2";
-    const provider = new ethers.providers.JsonRpcProvider(`https://polygon-mumbai.infura.io/v3/${INFURA_ID}`);
+    const INFURA_ID = "3869e5d0a7ef4190b30686ff26767689";
+    const provider = new ethers.providers.JsonRpcProvider(`https://sepolia.infura.io/v3/${INFURA_ID}`);
     
     
 
@@ -217,6 +217,7 @@ const SignIn = ()=>{
       {
         to: tokenAddress,
         data: erc20.interface.encodeFunctionData("mint", [amount]),
+        //value: ""
       },
       {
         to : tokenAddress,
@@ -250,6 +251,20 @@ const SignIn = ()=>{
     console.log('Transaction hash: ', txHash);
   }
 
+  const mintNFT = async ()=>{ 
+
+    //check CA balance
+    const contractAddress = "0x84bC8e38798B0a8B10ff6715d0Aa9E3aDaD19Fad";
+    const contractABI = require('../contractAbi_SDGs.json');
+ 
+    const INFURA_ID = "3869e5d0a7ef4190b30686ff26767689";
+    const provider = new ethers.providers.JsonRpcProvider(`https://sepolia.infura.io/v3/${INFURA_ID}`);
+
+    const contractInstance = new ethers.Contract(contractAddress, contractABI, provider);
+ 
+
+  }
+
   return (
 
       <Stack>
@@ -265,7 +280,7 @@ const SignIn = ()=>{
                 <Box>
                   <Flex>
                     <Text fontSize={[1,2,3]}>{userInfo.name}&nbsp;:&nbsp;&nbsp; </Text>
-                    <Text fontSize={[1,2,3]}>{ethBalance} MATIC</Text>
+                    <Text fontSize={[1,2,3]}>{ethBalance} ETH</Text>
                   </Flex>
                   <Flex>
                     <Text fontSize={[1,2,3]} >EOA Address: </Text>
@@ -283,6 +298,7 @@ const SignIn = ()=>{
                     <Button fontSize="lg" padding= '16px' size={[1,2,3]} bg="#F5F5F5" borderRadius="15px" onClick={executeUserOpAndGasNativeByUser}> 自行支付 </Button>
                     <Button fontSize="lg" padding= '16px' size={[1,2,3]} bg="#F5F5F5" borderRadius="15px" onClick={executeUserOpAndGasNativeByPaymaster}> Paymaster支付</Button>
                     <Button fontSize="lg" padding= '16px' size={[1,2,3]} bg="#F5F5F5" borderRadius="15px" onClick={executeUserOpAndGasERC20ByUser}> ERC-20支付 </Button>
+                    <Button fontSize="lg" padding= '16px' size={[1,2,3]} bg="#F5F5F5" borderRadius="15px" onClick={mintNFT}> Mint - NFT </Button>
                   </Flex>
                 </Box>
             )}
