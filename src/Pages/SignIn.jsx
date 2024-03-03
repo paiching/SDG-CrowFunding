@@ -56,10 +56,11 @@ SendTransactionMode.Gasless), 'any');
 particle.setERC4337(true);
 
 const SignIn = ()=>{
-  //const [userInfo, setUserInfo] = useState(null);
-  
+  // const [userInfo, setUserInfo] = useState(null);
+  // const [CAaddress, setCAaddress] = useState(null);
+
   console.log(useAuth()); // Add this line to log the output of useAuth
-  const { userInfo, setUserInfo, smartAccount,setSmartAccount } = useAuth();
+  const { userInfo, setUserInfo, CAaddress,setCAaddress } = useAuth();
   //這邊會影響provider的參數設置 請參考AuthContext <AuthContext.Provider value={{ userInfo, setUserInfo, smartAccount, setSmartAccount }}>
 
   const [caAddress, setCaAddress] = useState(null);
@@ -70,11 +71,6 @@ const SignIn = ()=>{
   const [tx, setTx] = useState(null);
   const [success, setSuccess] = useState(true);
 
-  useEffect(() => {
-    if (userInfo && smartAccount) {
-      console.log("effect"+smartAccount);
-    }
-  }, [userInfo, smartAccount, setSmartAccount]);
 
   // const updateStatus = async (txHash, userOpHash) =>{
   //   setStatus('success')
@@ -89,6 +85,7 @@ const SignIn = ()=>{
     setEthBalance(ethers.utils.formatEther(balance));
     setCaAddress(caAddress);
     setEoaAddress(eoaAddress);
+    setCAaddress(caAddress);
 
     console.log(smartAccount.getPaymasterApiKey());
 
@@ -96,32 +93,10 @@ const SignIn = ()=>{
 
   const handleLogin = async (preferredAuthType) => {
 
-    const smartAccount = new SmartAccount(new ParticleProvider(particle.auth), {
-      ...config,
-      aaOptions:{
-        biconomy: [{
-          chainId: EthereumSepolia.id, //PolygonMumbai
-          version: '1.0.0',
-        }],
-        paymasterApiKeys: [{
-          chainId: EthereumSepolia.id,
-          apiKey: process.env.REACT_APP_BICONOMY_KEY,
-    
-      }]
-      }
-    });
-
     try {
       const user = !particle.auth.isLogin() ? await particle.auth.login({preferredAuthType}) : particle.auth.getUserInfo();
       setUserInfo(user);
-      const newCaAddress = await smartAccount.caAddress;
-      const newEoaAddress = await smartAccount.eoaAddress;
-      const newSmartAccount = { caAddress: newCaAddress, eoaAddress: newEoaAddress }; // 创建一个新的 smartAccount 对象
-      setSmartAccount(newSmartAccount); // 更新状态
-  
-      // 使用新的 smartAccount 对象进行操作
-      // 注意：这里不是使用状态 smartAccount，而是新创建的 newSmartAccount 对象
-      await fetchEthBalance(newSmartAccount);
+ 
     } catch (error) {
       console.error("Login failed:", error);
       // Handle the error accordingly
