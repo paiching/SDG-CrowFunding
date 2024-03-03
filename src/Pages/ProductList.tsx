@@ -84,10 +84,10 @@ const ProductList = () => {
     // console.log("number"+quantities);
     try {
 
-      const payableAmount = ethers.utils.parseUnits("0.001", "ether"); // Convert to the correct unit
+      const payableAmount = ethers.utils.parseUnits("0.0001", "ether"); // Convert to the correct unit
       const ids = [0, 1, 2, 3]; // Your token IDs
       const quantities = [0, 0, 0, 1]; // Corresponding quantities
-      const txReceipt = await mintBatchWithCA("0.001", ids, quantities);
+      const txReceipt = await mintBatchWithCA("0.0001", ids, quantities);
       //const txReceipt = await mintBatchA(0.001, ids, quantities);
       //const txReceipt = await smartAccount.mintBatch(totalAmount, ids, quantities);
   
