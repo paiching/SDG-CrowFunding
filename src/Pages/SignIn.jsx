@@ -97,6 +97,9 @@ const SignIn = ()=>{
       const user = !particle.auth.isLogin() ? await particle.auth.login({preferredAuthType}) : particle.auth.getUserInfo();
       setUserInfo(user);
  
+      // 使用新的 smartAccount 对象进行操作
+      // 注意：这里不是使用状态 smartAccount，而是新创建的 newSmartAccount 对象
+      await fetchEthBalance(smartAccount);
     } catch (error) {
       console.error("Login failed:", error);
       // Handle the error accordingly
