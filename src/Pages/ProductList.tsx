@@ -77,11 +77,11 @@ const ProductList = () => {
     }
 
     const totalAmount = calculateTotal();
-    const ids = products.map(p => p.id);
-    const quantities = products.map(p => p.quantity);
+    // const ids = products.map(p => p.id);
+    // const quantities = products.map(p => p.quantity);
 
-    console.log("IDS"+ids);
-    console.log("number"+quantities);
+    // console.log("IDS"+ids);
+    // console.log("number"+quantities);
     try {
 
       const payableAmount = ethers.utils.parseUnits("0.001", "ether"); // Convert to the correct unit
