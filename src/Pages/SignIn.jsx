@@ -93,14 +93,21 @@ const SignIn = ()=>{
       const user = !particle.auth.isLogin() ? await particle.auth.login({preferredAuthType}) : particle.auth.getUserInfo();
       setUserInfo(user);
 
-      // 这里是新添加的代码，用于在登录成功后设置 smartAccount
-      const caAddress = await smartAccount.getAddress();
-      const eoaAddress = await smartAccount.getOwner();
-      setSmartAccount({
-        caAddress: caAddress,
-        eoaAddress: eoaAddress,
-        // 可以添加更多需要的信息
-      });
+      // Check if the smartAccount object exists before trying to use it
+      if (smartAccount) {
+        const caAddress = await smartAccount.getAddress();
+        const eoaAddress = await smartAccount.getOwner();
+        
+        // Update your smartAccount state with the new addresses
+        setSmartAccount({
+          ...smartAccount, // Spread any existing smartAccount properties
+          caAddress: caAddress,
+          eoaAddress: eoaAddress
+        });
+      } else {
+        // Handle the case where smartAccount is null
+        console.error("SmartAccount object is null. Make sure it is initialized correctly.");
+      }
       //window.history.previous.href;
     } catch (error) {
       console.error("Login failed:", error);
