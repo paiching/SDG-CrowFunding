@@ -4,7 +4,7 @@ import { AuthContext  } from '../AuthContext';
 
 
 const contractABI = require('./contractAbi_NFT.json');
-const contractAddress = "0x4A5e981F875bDA37AAD604d0e3db14B9D2481a76";
+const contractAddress = "0x78EE555683Ac65e61C8830840e758a9622bc473C";
 
 export const useContract = () => {
   const [contract, setContract] = useState(null);
@@ -50,8 +50,7 @@ const mintBatchWithCA = async (payableAmount, ids, quantities) => {
     // 确保合约和smartAccount都已初始化
     if (!contract || !smartAccount) throw new Error('合约或smartAccount未初始化');
 
-    
-
+  
     // 准备交易详情
     const txs = [
       {
