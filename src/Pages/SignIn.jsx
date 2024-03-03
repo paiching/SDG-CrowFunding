@@ -60,6 +60,7 @@ const SignIn = ()=>{
   
   console.log(useAuth()); // Add this line to log the output of useAuth
   const { userInfo, setUserInfo, smartAccount,setSmartAccount } = useAuth();
+  //這邊會影響provider的參數設置 請參考AuthContext <AuthContext.Provider value={{ userInfo, setUserInfo, smartAccount, setSmartAccount }}>
 
   const [caAddress, setCaAddress] = useState(null);
   const [eoaAddress, setEoaAddress] = useState(null);
@@ -97,15 +98,20 @@ const SignIn = ()=>{
     try {
       const user = !particle.auth.isLogin() ? await particle.auth.login({preferredAuthType}) : particle.auth.getUserInfo();
       setUserInfo(user);
-      const caAddress = await smartAccount.getAddress();
-      const eoaAddress = await smartAccount.getOwner();
-      setSmartAccount({ caAddress, eoaAddress }); // 更新 smartAccount 状态
-      //window.history.previous.href;
+      const newCaAddress = await smartAccount.getAddress();
+      const newEoaAddress = await smartAccount.getOwner();
+      const newSmartAccount = { caAddress: newCaAddress, eoaAddress: newEoaAddress }; // 创建一个新的 smartAccount 对象
+      setSmartAccount(newSmartAccount); // 更新状态
+  
+      // 使用新的 smartAccount 对象进行操作
+      // 注意：这里不是使用状态 smartAccount，而是新创建的 newSmartAccount 对象
+      await fetchEthBalance(newSmartAccount);
     } catch (error) {
       console.error("Login failed:", error);
-      // Handle the error accordingly, possibly setting an error state and displaying a message to the user.
+      // Handle the error accordingly
     }
   };
+  
 
   const executeUserOpAndGasNativeByUser = async ()=>{
     const tokenAddress = "0x84bC8e38798B0a8B10ff6715d0Aa9E3aDaD19Fad";
