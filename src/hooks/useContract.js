@@ -48,7 +48,7 @@ const mintBatchWithCA = async (payableAmount, ids, quantities) => {
       {
         to: contractAddress,
         data: contract.interface.encodeFunctionData('mintBatch', [ids, quantities]),
-        value: ethers.utils.hexlify(payableAmountInWei)
+        value: payableAmount
       }
     ];
 
