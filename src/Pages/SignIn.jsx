@@ -77,7 +77,7 @@ const smartAccount1 = new SmartAccount(new ParticleProvider(particle.auth), {
   }]
   }
 });
-  setSmartAccount(smartAccount1);
+  //setSmartAccount(smartAccount1); //連動到auth
   const customProvider = new ethers.providers.Web3Provider(new AAWrapProvider(smartAccount,
   SendTransactionMode.Gasless), 'any');
   
