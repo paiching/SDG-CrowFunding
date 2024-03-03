@@ -2,14 +2,13 @@ import { useState, useEffect,useContext } from 'react';
 import {ethers} from 'ethers';
 import { AuthContext  } from '../AuthContext';
 
-const RPC_URL = process.env.REACT_APP_SEPOLIA_RPC_URL;
-const PRIVATE_KEY = process.env.REACT_APP_SDG_PRIVATE_KEY;
+
 const contractABI = require('./contractAbi_NFT.json');
 const contractAddress = "0x78EE555683Ac65e61C8830840e758a9622bc473C";
 
 export const useContract = () => {
   const [contract, setContract] = useState(null);
-  const { CAaddress } = useContext(AuthContext);
+  
   // 使用 useContext 获取 AuthContext 中的 smartAccount
   const { smartAccount } = useContext(AuthContext);
 
@@ -36,17 +35,7 @@ export const useContract = () => {
     }
   };
 
-  const mintBatchA = async (payableAmount, ids, quantities) => {
-    if (!contract) throw new Error('Contract not initialized');
-    const provider = new ethers.providers.JsonRpcProvider(smartAccount.provider);
-    const signer = new ethers.Wallet(CAaddress, provider);
-    const contractInstance = new ethers.Contract(contractAddress, contractABI, signer);
-    const transaction = await contractInstance.mintBatch(ids, quantities, {
-      value: ethers.utils.parseUnits(payableAmount.toString(), 'ether').toHexString()
-    });
 
-    return await transaction.wait(); // This will return the transaction receipt
-  };
 
 // 使用智能账户执行mintBatch操作
 const mintBatchWithCA = async (payableAmount, ids, quantities) => {
@@ -76,5 +65,5 @@ const mintBatchWithCA = async (payableAmount, ids, quantities) => {
     }
    };
 
-  return { contract, fetchTreasury , mintBatchA, mintBatchWithCA };
+  return { contract, fetchTreasury, mintBatchWithCA };
 };
