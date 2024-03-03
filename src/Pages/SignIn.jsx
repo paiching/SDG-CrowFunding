@@ -70,11 +70,24 @@ const SignIn = ()=>{
   const [tx, setTx] = useState(null);
   const [success, setSuccess] = useState(true);
 
-  useEffect(() =>{
-    if (userInfo){
-        fetchEthBalance();
+  useEffect(() => {
+    if (userInfo && !smartAccount) {
+      const smartAccount = new SmartAccount(new ParticleProvider(particle.auth), {
+        ...config,
+        aaOptions:{
+          biconomy: [{
+            chainId: EthereumSepolia.id, //PolygonMumbai
+            version: '1.0.0',
+          }],
+          paymasterApiKeys: [{
+            chainId: EthereumSepolia.id,
+            apiKey: process.env.REACT_APP_BICONOMY_KEY,
+      
+        }]
+        }
+      });
     }
-  }, [userInfo]);
+  }, [userInfo, smartAccount, setSmartAccount]);
 
   // const updateStatus = async (txHash, userOpHash) =>{
   //   setStatus('success')
@@ -95,6 +108,7 @@ const SignIn = ()=>{
   };
 
   const handleLogin = async (preferredAuthType) => {
+
     try {
       const user = !particle.auth.isLogin() ? await particle.auth.login({preferredAuthType}) : particle.auth.getUserInfo();
       setUserInfo(user);
