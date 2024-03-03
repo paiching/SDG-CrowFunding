@@ -44,76 +44,60 @@ const SignIn = ()=>{
   const [success, setSuccess] = useState(true);
 
 
-  // const updateStatus = async (txHash, userOpHash) =>{
-  //   setStatus('success')
-  //   setTxHash(txHash)
-  //   setUserOpHash(userOpHash)
-  // }
-
-  const config = {
-    projectId: process.env.REACT_APP_PROJECT_ID,
-    clientKey: process.env.REACT_APP_CLIENT_KEY,
-    appId: process.env.REACT_APP_APP_ID
-}
-
-const particle = new ParticleNetwork({
-    ...config,
-    chainName: EthereumSepolia.name,
-    chainId: EthereumSepolia.id,
-    wallet: {displayWalletEntry: true, uiMode: 'dark',}
-});
-
-const smartAccount1 = new SmartAccount(new ParticleProvider(particle.auth), {
-  ...config,
-  aaOptions:{
-    biconomy: [{
-      chainId: EthereumSepolia.id, //PolygonMumbai
-      version: '1.0.0',
-    }],
-    paymasterApiKeys: [{
-      chainId: EthereumSepolia.id,
-      apiKey: process.env.REACT_APP_BICONOMY_KEY,
-
-  }]
-  }
-});
-  //setSmartAccount(smartAccount1); //連動到auth
-  const customProvider = new ethers.providers.Web3Provider(new AAWrapProvider(smartAccount,
-  SendTransactionMode.Gasless), 'any');
-  
-  particle.setERC4337(true);
-
-  
-
-  const fetchEthBalance = async () =>{
-    const caAddress = await smartAccount.getAddress();
-    const eoaAddress = await smartAccount.getOwner();
-    const balance = await customProvider.getBalance(caAddress);
-    setEthBalance(ethers.utils.formatEther(balance));
-    setCaAddress(caAddress);
-    setEoaAddress(eoaAddress);
-    setCAaddress(caAddress);
-
-
-    console.log(smartAccount.getPaymasterApiKey());
-
-  };
-
   const handleLogin = async (preferredAuthType) => {
+
+    const config = {
+      projectId: process.env.REACT_APP_PROJECT_ID,
+      clientKey: process.env.REACT_APP_CLIENT_KEY,
+      appId: process.env.REACT_APP_APP_ID
+  }
+  
+  const particle = new ParticleNetwork({
+      ...config,
+      chainName: EthereumSepolia.name,
+      chainId: EthereumSepolia.id,
+      wallet: {displayWalletEntry: true, uiMode: 'dark',}
+  });
+  
+  const smartAccount = new SmartAccount(new ParticleProvider(particle.auth), {
+    ...config,
+    aaOptions:{
+      biconomy: [{
+        chainId: EthereumSepolia.id, //PolygonMumbai
+        version: '1.0.0',
+      }],
+      paymasterApiKeys: [{
+        chainId: EthereumSepolia.id,
+        apiKey: process.env.REACT_APP_BICONOMY_KEY,
+  
+    }]
+    }
+  });
+
+    const customProvider = new ethers.providers.Web3Provider(new AAWrapProvider(smartAccount,
+    SendTransactionMode.Gasless), 'any');
+    
+    particle.setERC4337(true);
 
     try {
       const user = !particle.auth.isLogin() ? await particle.auth.login({preferredAuthType}) : particle.auth.getUserInfo();
       setUserInfo(user);
- 
-      // 使用新的 smartAccount 对象进行操作
-      // 注意：这里不是使用状态 smartAccount，而是新创建的 newSmartAccount 对象
-      await fetchEthBalance(smartAccount);
+
+      setSmartAccount(smartAccount); //連動到AUTH
+      //await fetchEthBalance(smartAccount);
+      const caAddress = await smartAccount.getAddress();
+      const eoaAddress = await smartAccount.getOwner();
+      const balance = await customProvider.getBalance(caAddress);
+      setEthBalance(ethers.utils.formatEther(balance));
+      setCaAddress(caAddress);
+      setEoaAddress(eoaAddress);
+      setCAaddress(caAddress);
+      console.log(smartAccount.getPaymasterApiKey());
     } catch (error) {
       console.error("Login failed:", error);
       // Handle the error accordingly
     }
   };
-  
 
   const executeUserOpAndGasNativeByUser = async ()=>{
     const tokenAddress = "0x84bC8e38798B0a8B10ff6715d0Aa9E3aDaD19Fad";
