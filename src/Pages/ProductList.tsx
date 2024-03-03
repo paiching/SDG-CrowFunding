@@ -24,10 +24,12 @@ const initialProducts: Product[] = [
 ];
 
 const ProductList = () => {
-  const { userInfo, smartAccount } = useAuth();
+  const { userInfo } = useAuth();
+  const { CAaddress } = useAuth(); //signin 後會更新
+  const { smartAccount } = useAuth();
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const { ethBalance, caAddress, eoaAddress, fetchEthBalance } = useSmartContract();
-  const { contract, fetchTreasury, mintBatch,mintBatchWithCA } = useContract();
+  const { contract, fetchTreasury,mintBatchWithCA } = useContract();
   const [totalSupply, setTotalSupply] = useState('Loading...');
 
   useEffect(() => {
@@ -81,6 +83,7 @@ const ProductList = () => {
     console.log("number"+quantities);
     try {
       const txReceipt = await mintBatchWithCA(totalAmount, ids, quantities);
+      //const txReceipt = await smartAccount.mintBatch(totalAmount, ids, quantities);
       console.log('Minted successfully: address'+caAddress+" | ", txReceipt);
     } catch (error) {
       console.error('Error during minting:', error);
