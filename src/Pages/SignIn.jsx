@@ -71,8 +71,8 @@ const SignIn = ()=>{
   const [success, setSuccess] = useState(true);
 
   useEffect(() => {
-    if (userInfo && !smartAccount) {
-
+    if (userInfo && smartAccount) {
+      console.log("effect"+smartAccount);
     }
   }, [userInfo, smartAccount, setSmartAccount]);
 
@@ -114,8 +114,8 @@ const SignIn = ()=>{
     try {
       const user = !particle.auth.isLogin() ? await particle.auth.login({preferredAuthType}) : particle.auth.getUserInfo();
       setUserInfo(user);
-      const newCaAddress = await smartAccount.getAddress();
-      const newEoaAddress = await smartAccount.getOwner();
+      const newCaAddress = await smartAccount.caAddress;
+      const newEoaAddress = await smartAccount.eoaAddress;
       const newSmartAccount = { caAddress: newCaAddress, eoaAddress: newEoaAddress }; // 创建一个新的 smartAccount 对象
       setSmartAccount(newSmartAccount); // 更新状态
   
