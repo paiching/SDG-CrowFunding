@@ -42,7 +42,7 @@ const mintBatchWithCA = async (payableAmount, ids, quantities) => {
     // 确保合约和smartAccount都已初始化
     if (!contract || !smartAccount) throw new Error('合约或smartAccount未初始化');
 
-    const payableAmountInWei = ethers.utils.parseUnits(payableAmountInEther, "ether");
+    const payableAmountInWei = ethers.utils.parseUnits(payableAmount, "ether");
     // 准备交易详情
     const txs = [
       {
