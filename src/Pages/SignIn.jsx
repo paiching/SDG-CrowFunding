@@ -59,7 +59,7 @@ const SignIn = ()=>{
   //const [userInfo, setUserInfo] = useState(null);
   
   console.log(useAuth()); // Add this line to log the output of useAuth
-  const { userInfo, setUserInfo } = useAuth();
+  const { userInfo, setUserInfo, setSmartAccount } = useAuth();
 
   const [caAddress, setCaAddress] = useState(null);
   const [eoaAddress, setEoaAddress] = useState(null);
@@ -97,6 +97,9 @@ const SignIn = ()=>{
     try {
       const user = !particle.auth.isLogin() ? await particle.auth.login({preferredAuthType}) : particle.auth.getUserInfo();
       setUserInfo(user);
+      const caAddress = await smartAccount.getAddress();
+      const eoaAddress = await smartAccount.getOwner();
+      setSmartAccount({ caAddress, eoaAddress }); // 更新 smartAccount 状态
       //window.history.previous.href;
     } catch (error) {
       console.error("Login failed:", error);

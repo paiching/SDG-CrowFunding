@@ -24,7 +24,7 @@ const initialProducts: Product[] = [
 ];
 
 const ProductList = () => {
-  const { userInfo } = useAuth();
+  const { userInfo, smartAccount } = useAuth();
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const { ethBalance, caAddress, eoaAddress, fetchEthBalance } = useSmartContract();
   const { contract, fetchTreasury, mintBatch,mintBatchWithCA } = useContract();
