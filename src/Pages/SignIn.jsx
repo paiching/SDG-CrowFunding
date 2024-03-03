@@ -59,7 +59,7 @@ const SignIn = ()=>{
   //const [userInfo, setUserInfo] = useState(null);
   
   console.log(useAuth()); // Add this line to log the output of useAuth
-  const { userInfo, setUserInfo, setSmartAccount } = useAuth();
+  const { userInfo, setUserInfo, smartAccount,setSmartAccount } = useAuth();
 
   const [caAddress, setCaAddress] = useState(null);
   const [eoaAddress, setEoaAddress] = useState(null);
