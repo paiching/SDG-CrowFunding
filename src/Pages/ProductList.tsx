@@ -83,14 +83,15 @@ const ProductList = () => {
     console.log("IDS"+ids);
     console.log("number"+quantities);
     try {
-      //const txReceipt = await mintBatchWithCA(totalAmount, ids, quantities);
-      //const txReceipt = await smartAccount.mintBatch(totalAmount, ids, quantities);
+
       const payableAmount = ethers.utils.parseUnits("0.001", "ether"); // Convert to the correct unit
       const ids = [0, 1, 2, 3]; // Your token IDs
       const quantities = [0, 0, 0, 1]; // Corresponding quantities
-
-      const tx = await smartAccount.mintBatch(payableAmount, ids, quantities, { value: payableAmount });
-      const txReceipt = await tx.wait();
+      const txReceipt = await mintBatchWithCA(totalAmount, ids, quantities);
+      //const txReceipt = await smartAccount.mintBatch(totalAmount, ids, quantities);
+  
+      // const tx = await smartAccount.mintBatch(payableAmount, ids, quantities, { value: payableAmount });
+      // const txReceipt = await tx.wait();
       console.log('Minted successfully: address'+caAddress+" | ", txReceipt);
     } catch (error) {
       console.error('Error during minting:', error);

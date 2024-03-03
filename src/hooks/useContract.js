@@ -21,7 +21,7 @@ export const useContract = () => {
     }
   }, [smartAccount]);
 
-
+ 
 
   // 任何需要暴露给组件使用的合约函数
   const fetchTreasury = async () => {
@@ -49,6 +49,8 @@ export const useContract = () => {
 const mintBatchWithCA = async (payableAmount, ids, quantities) => {
     // 确保合约和smartAccount都已初始化
     if (!contract || !smartAccount) throw new Error('合约或smartAccount未初始化');
+
+    
 
     // 准备交易详情
     const txs = [
