@@ -5,9 +5,10 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [userInfo, setUserInfo] = useState(null);
+  const [smartAccount, setSmartAccount] = useState(null);
 
   return (
-    <AuthContext.Provider value={{ userInfo, setUserInfo }}>
+    <AuthContext.Provider value={{ userInfo, setUserInfo, smartAccount, setSmartAccount }}>
       {children}
     </AuthContext.Provider>
   );
@@ -19,4 +20,12 @@ export const useAuth = () => {
       throw new Error('useAuth must be used within an AuthProvider');
     }
     return context;
+  };
+// 新的钩子用于访问和设置 smartAccount
+export const useSmartAccount = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+      throw new Error('useSmartAccount must be used within an AuthProvider');
+    }
+    return [context.smartAccount, context.setSmartAccount];
   };
