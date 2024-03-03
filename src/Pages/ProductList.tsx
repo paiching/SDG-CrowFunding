@@ -16,18 +16,18 @@ interface Product {
 
 // 初始產品列表
 const initialProducts: Product[] = [
-  { id: 1, name: '消除貧窮(普通)', price: 0.001, description: 'DAO權重 X 1', quantity: 0 ,imageUrl: '/icons/goal-1/GOAL_1_TARGETS/GOAL_1_TARGETS_PNG/GOAL_1_TARGET_1.1.png' },
+  { id: 0, name: '消除貧窮(普通)', price: 0.001, description: 'DAO權重 X 1', quantity: 0 ,imageUrl: '/icons/goal-1/GOAL_1_TARGETS/GOAL_1_TARGETS_PNG/GOAL_1_TARGET_1.1.png' },
   //SDG-CrowdFunding\public\icons\goal-1\GOAL_1_TARGETS\GOAL_1_TARGETS_PNG\GOAL_1_TARGET_1.1.png
-  { id: 2, name: '消除貧窮(經典)', price: 0.001, description: 'DAO權重 X 3', quantity: 0 ,imageUrl: '/icons/goal-1/GOAL_1_TARGETS/GOAL_1_TARGETS_PNG/GOAL_1_TARGET_1.2.png'},
-  { id: 3, name: '消除貧窮(史詩)', price: 0.001, description: 'DAO權重 X 6', quantity: 0 ,imageUrl: '/icons/goal-1/GOAL_1_TARGETS/GOAL_1_TARGETS_PNG/GOAL_1_TARGET_1.3.png'},
-  { id: 4, name: '消除貧窮(傳說)', price: 0.001, description: 'DAO權重 X 10', quantity: 0 ,imageUrl: '/icons/goal-1/GOAL_1_TARGETS/GOAL_1_TARGETS_PNG/GOAL_1_TARGET_1.B.png'},
+  { id: 1, name: '消除貧窮(經典)', price: 0.001, description: 'DAO權重 X 3', quantity: 0 ,imageUrl: '/icons/goal-1/GOAL_1_TARGETS/GOAL_1_TARGETS_PNG/GOAL_1_TARGET_1.2.png'},
+  { id: 2, name: '消除貧窮(史詩)', price: 0.001, description: 'DAO權重 X 6', quantity: 0 ,imageUrl: '/icons/goal-1/GOAL_1_TARGETS/GOAL_1_TARGETS_PNG/GOAL_1_TARGET_1.3.png'},
+  { id: 3, name: '消除貧窮(傳說)', price: 0.001, description: 'DAO權重 X 10', quantity: 0 ,imageUrl: '/icons/goal-1/GOAL_1_TARGETS/GOAL_1_TARGETS_PNG/GOAL_1_TARGET_1.B.png'},
 ];
 
 const ProductList = () => {
   const { userInfo } = useAuth();
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const { ethBalance, caAddress, eoaAddress, fetchEthBalance } = useSmartContract();
-  const { contract, fetchTreasury, mintBatch} = useContract();
+  const { contract, fetchTreasury, mintBatch,mintBatchWithCA } = useContract();
   const [totalSupply, setTotalSupply] = useState('Loading...');
 
   useEffect(() => {
@@ -67,19 +67,21 @@ const ProductList = () => {
 
   // 顯示總金額
   const handleMint = async () => {
-    if (!userInfo) {
-      alert('请先登录');
-      window.location.href = '/signin';
-      return;
-    }
+    // if (!userInfo) {
+    //   alert('请先登录');
+    //   window.location.href = '/signin';
+    //   return;
+    // }
 
     const totalAmount = calculateTotal();
     const ids = products.map(p => p.id);
     const quantities = products.map(p => p.quantity);
 
+    console.log("IDS"+ids);
+    console.log("number"+quantities);
     try {
-      const txReceipt = await mintBatch(totalAmount, ids, quantities);
-      console.log('Minted successfully:', txReceipt);
+      const txReceipt = await mintBatchWithCA(totalAmount, ids, quantities,caAddress);
+      console.log('Minted successfully: address'+caAddress+" | ", txReceipt);
     } catch (error) {
       console.error('Error during minting:', error);
       alert('鑄造过程中发生错误');
