@@ -59,12 +59,11 @@ const SignIn = ()=>{
   //const [userInfo, setUserInfo] = useState(null);
   
   console.log(useAuth()); // Add this line to log the output of useAuth
-  const { userInfo, setUserInfo,smartAccount, setSmartAccount } = useAuth();
+  const { userInfo, setUserInfo } = useAuth();
 
   const [caAddress, setCaAddress] = useState(null);
   const [eoaAddress, setEoaAddress] = useState(null);
   const [ethBalance, setEthBalance] = useState();
- 
   // const [status, setStatus] = useState(null);
   // const [userOpHash, setUserOpHash] = useState(null);
   const [tx, setTx] = useState(null);
@@ -75,6 +74,12 @@ const SignIn = ()=>{
         fetchEthBalance();
     }
   }, [userInfo]);
+
+  // const updateStatus = async (txHash, userOpHash) =>{
+  //   setStatus('success')
+  //   setTxHash(txHash)
+  //   setUserOpHash(userOpHash)
+  // }
 
   const fetchEthBalance = async () =>{
     const caAddress = await smartAccount.getAddress();
@@ -92,22 +97,6 @@ const SignIn = ()=>{
     try {
       const user = !particle.auth.isLogin() ? await particle.auth.login({preferredAuthType}) : particle.auth.getUserInfo();
       setUserInfo(user);
-
-      // Check if the smartAccount object exists before trying to use it
-      if (smartAccount) {
-        const caAddress = await smartAccount.getAddress();
-        const eoaAddress = await smartAccount.getOwner();
-        
-        // Update your smartAccount state with the new addresses
-        setSmartAccount({
-          ...smartAccount, // Spread any existing smartAccount properties
-          caAddress: caAddress,
-          eoaAddress: eoaAddress
-        });
-      } else {
-        // Handle the case where smartAccount is null
-        console.error("SmartAccount object is null. Make sure it is initialized correctly.");
-      }
       //window.history.previous.href;
     } catch (error) {
       console.error("Login failed:", error);
@@ -306,6 +295,7 @@ const SignIn = ()=>{
                     <Button fontSize="lg" padding= '16px' size={[1,2,3]} bg="#F5F5F5" borderRadius="15px" onClick={executeUserOpAndGasNativeByUser}> 自行支付 </Button>
                     <Button fontSize="lg" padding= '16px' size={[1,2,3]} bg="#F5F5F5" borderRadius="15px" onClick={executeUserOpAndGasNativeByPaymaster}> Paymaster支付</Button>
                     <Button fontSize="lg" padding= '16px' size={[1,2,3]} bg="#F5F5F5" borderRadius="15px" onClick={executeUserOpAndGasERC20ByUser}> ERC-20支付 </Button>
+                   
                   </Flex>
                 </Box>
             )}
