@@ -67,11 +67,11 @@ const ProductList = () => {
 
   // 顯示總金額
   const handleMint = async () => {
-    // if (!userInfo) {
-    //   alert('请先登录');
-    //   window.location.href = '/signin';
-    //   return;
-    // }
+    if (!userInfo) {
+      alert('请先登录');
+      window.location.href = '/signin';
+      return;
+    }
 
     const totalAmount = calculateTotal();
     const ids = products.map(p => p.id);
@@ -80,7 +80,7 @@ const ProductList = () => {
     console.log("IDS"+ids);
     console.log("number"+quantities);
     try {
-      const txReceipt = await mintBatchWithCA(totalAmount, ids, quantities,caAddress);
+      const txReceipt = await mintBatchWithCA(totalAmount, ids, quantities);
       console.log('Minted successfully: address'+caAddress+" | ", txReceipt);
     } catch (error) {
       console.error('Error during minting:', error);
