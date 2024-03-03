@@ -4,7 +4,7 @@ import { AuthContext  } from '../AuthContext';
 
 
 const contractABI = require('./contractAbi_NFT.json');
-const contractAddress = "0x79A90368c467E63d3921e607aad12b05E0732A69";
+const contractAddress = "0x9F3E9f9A0F4F5ddD0CaA0fC70A9123c3Ca32E76a";
 
 export const useContract = () => {
   const [contract, setContract] = useState(null);
