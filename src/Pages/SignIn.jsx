@@ -21,46 +21,18 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import  Header  from '../Components/Header.tsx';
 
 
-const config = {
-    projectId: process.env.REACT_APP_PROJECT_ID,
-    clientKey: process.env.REACT_APP_CLIENT_KEY,
-    appId: process.env.REACT_APP_APP_ID
-}
-
-const particle = new ParticleNetwork({
-    ...config,
-    chainName: EthereumSepolia.name,
-    chainId: EthereumSepolia.id,
-    wallet: {displayWalletEntry: true, uiMode: 'dark',}
-});
-
-const smartAccount = new SmartAccount(new ParticleProvider(particle.auth), {
-  ...config,
-  aaOptions:{
-    biconomy: [{
-      chainId: EthereumSepolia.id, //PolygonMumbai
-      version: '1.0.0',
-    }],
-    paymasterApiKeys: [{
-      chainId: EthereumSepolia.id,
-      apiKey: process.env.REACT_APP_BICONOMY_KEY,
-
-  }]
-  }
-});
 
 
-const customProvider = new ethers.providers.Web3Provider(new AAWrapProvider(smartAccount,
-SendTransactionMode.Gasless), 'any');
 
-particle.setERC4337(true);
+
+
 
 const SignIn = ()=>{
   // const [userInfo, setUserInfo] = useState(null);
   // const [CAaddress, setCAaddress] = useState(null);
 
   console.log(useAuth()); // Add this line to log the output of useAuth
-  const { userInfo, setUserInfo, CAaddress,setCAaddress } = useAuth();
+  const { userInfo, setUserInfo, CAaddress,setCAaddress, smartAccount, setSmartAccount } = useAuth();
   //這邊會影響provider的參數設置 請參考AuthContext <AuthContext.Provider value={{ userInfo, setUserInfo, smartAccount, setSmartAccount }}>
 
   const [caAddress, setCaAddress] = useState(null);
@@ -78,6 +50,41 @@ const SignIn = ()=>{
   //   setUserOpHash(userOpHash)
   // }
 
+  const config = {
+    projectId: process.env.REACT_APP_PROJECT_ID,
+    clientKey: process.env.REACT_APP_CLIENT_KEY,
+    appId: process.env.REACT_APP_APP_ID
+}
+
+const particle = new ParticleNetwork({
+    ...config,
+    chainName: EthereumSepolia.name,
+    chainId: EthereumSepolia.id,
+    wallet: {displayWalletEntry: true, uiMode: 'dark',}
+});
+
+const smartAccount1 = new SmartAccount(new ParticleProvider(particle.auth), {
+  ...config,
+  aaOptions:{
+    biconomy: [{
+      chainId: EthereumSepolia.id, //PolygonMumbai
+      version: '1.0.0',
+    }],
+    paymasterApiKeys: [{
+      chainId: EthereumSepolia.id,
+      apiKey: process.env.REACT_APP_BICONOMY_KEY,
+
+  }]
+  }
+});
+  setSmartAccount(smartAccount1);
+  const customProvider = new ethers.providers.Web3Provider(new AAWrapProvider(smartAccount,
+  SendTransactionMode.Gasless), 'any');
+  
+  particle.setERC4337(true);
+
+  
+
   const fetchEthBalance = async () =>{
     const caAddress = await smartAccount.getAddress();
     const eoaAddress = await smartAccount.getOwner();
@@ -86,6 +93,7 @@ const SignIn = ()=>{
     setCaAddress(caAddress);
     setEoaAddress(eoaAddress);
     setCAaddress(caAddress);
+
 
     console.log(smartAccount.getPaymasterApiKey());
 
