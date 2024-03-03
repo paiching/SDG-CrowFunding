@@ -59,12 +59,12 @@ const SignIn = ()=>{
   //const [userInfo, setUserInfo] = useState(null);
   
   console.log(useAuth()); // Add this line to log the output of useAuth
-  const { userInfo, setUserInfo } = useAuth();
+  const { userInfo, setUserInfo,smartAccount, setSmartAccount } = useAuth();
 
   const [caAddress, setCaAddress] = useState(null);
   const [eoaAddress, setEoaAddress] = useState(null);
   const [ethBalance, setEthBalance] = useState();
-  const [smartAccount, setSmartAccount] = useState();
+ 
   // const [status, setStatus] = useState(null);
   // const [userOpHash, setUserOpHash] = useState(null);
   const [tx, setTx] = useState(null);
@@ -96,7 +96,11 @@ const SignIn = ()=>{
       // 这里是新添加的代码，用于在登录成功后设置 smartAccount
       const caAddress = await smartAccount.getAddress();
       const eoaAddress = await smartAccount.getOwner();
-      setSmartAccount({ caAddress, eoaAddress }); // 假设 smartAccount 对象包含 CA 和 EOA 地址
+      setSmartAccount({
+        caAddress: caAddress,
+        eoaAddress: eoaAddress,
+        // 可以添加更多需要的信息
+      });
       //window.history.previous.href;
     } catch (error) {
       console.error("Login failed:", error);
