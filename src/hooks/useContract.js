@@ -35,11 +35,11 @@ export const useContract = () => {
     }
   };
 
-  const mintBatch = async (payableAmount, ids, quantities) => {
+  const mintBatchA = async (payableAmount, ids, quantities) => {
     if (!contract) throw new Error('Contract not initialized');
 
     const transaction = await contract.mintBatch(ids, quantities, {
-      value: ethers.utils.parseEther(payableAmount.toString())
+      value: ethers.utils.parseUnits(payableAmount.toString(), 'ether').toHexString()
     });
 
     return await transaction.wait(); // This will return the transaction receipt
@@ -73,5 +73,5 @@ const mintBatchWithCA = async (payableAmount, ids, quantities) => {
     }
    };
 
-  return { contract, fetchTreasury , mintBatch, mintBatchWithCA };
+  return { contract, fetchTreasury , mintBatchA, mintBatchWithCA };
 };
