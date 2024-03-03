@@ -64,6 +64,7 @@ const SignIn = ()=>{
   const [caAddress, setCaAddress] = useState(null);
   const [eoaAddress, setEoaAddress] = useState(null);
   const [ethBalance, setEthBalance] = useState();
+  const [smartAccount, setSmartAccount] = useState();
   // const [status, setStatus] = useState(null);
   // const [userOpHash, setUserOpHash] = useState(null);
   const [tx, setTx] = useState(null);
@@ -74,12 +75,6 @@ const SignIn = ()=>{
         fetchEthBalance();
     }
   }, [userInfo]);
-
-  // const updateStatus = async (txHash, userOpHash) =>{
-  //   setStatus('success')
-  //   setTxHash(txHash)
-  //   setUserOpHash(userOpHash)
-  // }
 
   const fetchEthBalance = async () =>{
     const caAddress = await smartAccount.getAddress();
@@ -97,6 +92,11 @@ const SignIn = ()=>{
     try {
       const user = !particle.auth.isLogin() ? await particle.auth.login({preferredAuthType}) : particle.auth.getUserInfo();
       setUserInfo(user);
+
+      // 这里是新添加的代码，用于在登录成功后设置 smartAccount
+      const caAddress = await smartAccount.getAddress();
+      const eoaAddress = await smartAccount.getOwner();
+      setSmartAccount({ caAddress, eoaAddress }); // 假设 smartAccount 对象包含 CA 和 EOA 地址
       //window.history.previous.href;
     } catch (error) {
       console.error("Login failed:", error);
@@ -262,20 +262,6 @@ const SignIn = ()=>{
     console.log('Transaction hash: ', txHash);
   }
 
-  const mintNFT = async ()=>{ 
-
-    //check CA balance
-    const contractAddress = "0x84bC8e38798B0a8B10ff6715d0Aa9E3aDaD19Fad";
-    const contractABI = require('./contractAbi_SDGs.json');
- 
-    const INFURA_ID = "3869e5d0a7ef4190b30686ff26767689";
-    const provider = new ethers.providers.JsonRpcProvider(`https://sepolia.infura.io/v3/${INFURA_ID}`);
-
-    const contractInstance = new ethers.Contract(contractAddress, contractABI, provider);
-    console.log(contractInstance);
-
-  }
-
   return (
 
       <Stack>
@@ -309,7 +295,6 @@ const SignIn = ()=>{
                     <Button fontSize="lg" padding= '16px' size={[1,2,3]} bg="#F5F5F5" borderRadius="15px" onClick={executeUserOpAndGasNativeByUser}> 自行支付 </Button>
                     <Button fontSize="lg" padding= '16px' size={[1,2,3]} bg="#F5F5F5" borderRadius="15px" onClick={executeUserOpAndGasNativeByPaymaster}> Paymaster支付</Button>
                     <Button fontSize="lg" padding= '16px' size={[1,2,3]} bg="#F5F5F5" borderRadius="15px" onClick={executeUserOpAndGasERC20ByUser}> ERC-20支付 </Button>
-                    <Button fontSize="lg" padding= '16px' size={[1,2,3]} bg="#F5F5F5" borderRadius="15px" onClick={mintNFT}> Mint - NFT </Button>
                   </Flex>
                 </Box>
             )}
