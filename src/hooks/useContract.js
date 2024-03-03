@@ -59,7 +59,7 @@ const mintBatchWithCA = async (payableAmount, ids, quantities) => {
       {
         to: contractAddress,
         data: contract.interface.encodeFunctionData('mintBatch', [ids, quantities]),
-        value: ethers.utils.parseUnits(payableAmount.toString(), 'ether').toHexString(), // 确保值是适当格式化为十六进制字符串
+        value: ethers.utils.parseUnits(payableAmount.toString(), 'ether')
       }
     ];
 
