@@ -97,6 +97,7 @@ const SignIn = ()=>{
     try {
       const user = !particle.auth.isLogin() ? await particle.auth.login({preferredAuthType}) : particle.auth.getUserInfo();
       setUserInfo(user);
+      //window.history.previous.href;
     } catch (error) {
       console.error("Login failed:", error);
       // Handle the error accordingly, possibly setting an error state and displaying a message to the user.
