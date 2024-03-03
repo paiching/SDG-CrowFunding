@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './productlist.scss';
 import { useAuth } from '../AuthContext';
+import { useSmartContract } from '../hooks/useSmartContract';
 
 // 產品介面
 interface Product {
@@ -24,7 +25,20 @@ const initialProducts: Product[] = [
 const ProductList = () => {
   const { userInfo } = useAuth();
   const [products, setProducts] = useState<Product[]>(initialProducts);
+  const { ethBalance, caAddress, eoaAddress, fetchEthBalance } = useSmartContract();
 
+
+  useEffect(() => {
+    fetchEthBalance();
+  }, [fetchEthBalance]); // Fetch balance when the component mounts
+
+  useEffect(() => {
+    // This effect runs when ethBalance changes
+    if (ethBalance !== null) {
+      console.log(`Balance: ${ethBalance}`);
+    }
+  }, [ethBalance]); // ethBalance is a dependency of this effect
+  
   // 處理數量變化
   const handleQuantityChange = (id: number, quantity: number) => {
     if (quantity < 0) {
@@ -51,6 +65,7 @@ const ProductList = () => {
       // 如果 userInfo 存在，表示用户已登录，继续与合约交互
       //MintBatch();
       alert(`總金額: ${calculateTotal()}`);
+      
     } else {
       alert(`no login`);
       // 如果 userInfo 不存在，显示登录弹窗
