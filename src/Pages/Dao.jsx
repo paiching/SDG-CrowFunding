@@ -16,9 +16,9 @@ const Dao = () => {
    
     const fetchContractData = async () => {
       try {
-        const fetchedName = await useDAO.getName();
+       // const fetchedName = await useDAO.getName();
         const fetchedEvents = await useDAO.getAllEvents();
-        setName(fetchedName);
+       // setName(fetchedName);
         setEvents(fetchedEvents);
         // 过滤出特定事件
       // Filter specific events directly with contractInstance
