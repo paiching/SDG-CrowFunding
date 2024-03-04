@@ -74,7 +74,10 @@ const ContractsDao = () => {
     const calldatas = ["0x"]; // This should be the actual calldata required by the target contract
     const description = "描述"; // Description of the proposal
     
-    const result = await contract.propose(targets, values, calldatas, description);
+    const result = await contract.propose(targets, values, calldatas, description, {
+      gasPrice: ethers.utils.parseUnits('10', 'gwei'), // Example gas price
+      gasLimit: 1000000 // Example gas limit
+    });
     console.log(result); // Log the result or handle as needed
   };
 
