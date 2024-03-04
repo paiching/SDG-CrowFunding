@@ -1,0 +1,72 @@
+.proposalContainer{
+   width: 60%;
+   margin: auto;
+   margin-top: 30px;
+
+}
+
+.displayContainer{
+    margin-top: 30px;
+}
+
+.event-card {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 10px;
+    background-color: #f9f9f9;
+  }
+  
+  .event-card p {
+    margin: 5px 0;
+    color: #333;
+  }
+  
+  input[type="text"] {
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: calc(100% - 22px); /* Adjust width based on padding and border */
+  }
+  
+  button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 5px;
+  }
+  
+  button:hover {
+    background-color: #0056b3;
+  }
+  
+  button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+  
+  /* Additional styling for 'Connect Wallet' button to differentiate it */
+  button.connect-wallet-btn {
+    background-color: #28a745;
+  }
+  
+  button.connect-wallet-btn:hover {
+    background-color: #218838;
+  }
+  
+  .submission-status {
+    position: fixed; /* or absolute, depending on your layout */
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    color: white;
+    padding: 10px;
+    text-align: center;
+    z-index: 1000; /* Make sure it appears above other content */
+  }
+  
