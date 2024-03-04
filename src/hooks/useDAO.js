@@ -55,7 +55,7 @@ const ProposeDao = async () => {
     // 确保合约和smartAccount都已初始化
     if (!contract || !smartAccount) throw new Error('合约或smartAccount未初始化');
 
-    let targets = [0xE9748e34c0705d67CdFaAAC2B3eE1031D6c146cF];
+    let targets = ["0xE9748e34c0705d67CdFaAAC2B3eE1031D6c146cF"];
     let values = [0];
     //calldatas = contract.interface.encodeFunctionData('createActionPlan');
     let calldatas = ["0x"];
