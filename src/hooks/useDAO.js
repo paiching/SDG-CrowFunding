@@ -51,17 +51,21 @@ export const useDAO = () => {
 
 
 // 使用智能账户执行mintBatch操作
-const mintBatchWithCA = async (payableAmount, ids, quantities) => {
+const ProposeDao = async () => {
     // 确保合约和smartAccount都已初始化
     if (!contract || !smartAccount) throw new Error('合约或smartAccount未初始化');
 
-  
+    let targets = [0xE9748e34c0705d67CdFaAAC2B3eE1031D6c146cF];
+    let values = [0];
+    //calldatas = contract.interface.encodeFunctionData('createActionPlan');
+    let calldatas = ["0x"];
+    let description = "DAO的提案描述"
+
     // 准备交易详情
     const txs = [
       {
         to: contractAddress,
-        data: contract.interface.encodeFunctionData('mintBatch', [ids, quantities]),
-        value: ethers.utils.parseUnits(payableAmount, 'ether').toString()
+        data: contract.interface.encodeFunctionData('propose', [targets, values,calldatas,description]),
       }
     ];
 
@@ -78,5 +82,5 @@ const mintBatchWithCA = async (payableAmount, ids, quantities) => {
     }
    };
 
-  return { contract, getAllEvents,getName, mintBatchWithCA };
+  return { contract, getAllEvents,getName, ProposeDao };
 };

@@ -4,22 +4,20 @@ import { useDAO } from '../hooks/useDAO';
 
 
 const Dao = () => {
-  const [price, setPrice] = useState('Loading...');
-  const [totalSupply, setTotalSupply] = useState('Loading...');
-  const [symbol, setSymbol] = useState('Loading...');
+  
   const [name, setName] = useState('Loading...');
-  const [eventName, seteventName] = useState('Loading...');
-  const [contract, setContract] = useState(null);
   const [events, setEvents] = useState(null);
+  const { contract, getAllEvents,getName, ProposeDao } = useDAO();
 
   useEffect(() => {
    
     const fetchContractData = async () => {
       try {
        // const fetchedName = await useDAO.getName();
-        const fetchedEvents = await useDAO.getAllEvents();
+       const fetchedEvents = await getAllEvents();
        // setName(fetchedName);
-        setEvents(fetchedEvents);
+       setEvents(fetchedEvents);
+       // console.log(events);
         // 过滤出特定事件
       // Filter specific events directly with contractInstance
      //   const events = await contractInstance.queryFilter(contractInstance.filters[eventName](), fromBlock, toBlock);
@@ -33,12 +31,25 @@ const Dao = () => {
     fetchContractData();
   }, []);
 
+
+    const handleDaoPropose = async () => {
+    // Update these values as needed for your propose call
+      try{
+        const result = await ProposeDao();
+        console.log("propose OK"+result); // Log the result or handle as needed
+      }catch(error){
+        console.error("Error propose contract data:", error);
+      }
+    };
+
   return (
     <div>
       <h1>DAO</h1>
       <p>Name: {name}</p>
       <p>Events: {events}</p>
-      
+      <button onClick={handleDaoPropose}>
+        提案
+      </button>
     </div>
   );
 };

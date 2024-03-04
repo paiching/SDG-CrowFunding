@@ -11,6 +11,7 @@ import ItemsPage from './Pages/ItemsPage.jsx';
 import ProductList from './Pages/ProductList.tsx';
 import { AuthProvider } from './AuthContext';
 import Dao from './Pages/Dao.jsx';
+import ContractsDao from './Pages/ContractsDao.jsx';
 
 const App = ()=>{
 
@@ -25,10 +26,10 @@ const App = ()=>{
       <Route path="/signin" element={<SignIn />} />
       <Route path="/contracts" element={<Contracts />} />
       <Route path="/propose" element={<ProposalForm />} />
-      <Route path="/explore" element={<ProposalPage />} />
+      <Route path="/usedao" element={<Dao />} />
       <Route path="/items" element={<ItemsPage />} />
       <Route path="/products" element={<ProductList />} />
-      <Route path="/dao" element={<Dao />} />
+      <Route path="/dao" element={<ContractsDao />} />
      
         {/* <Route path="/" element={<HomePage />} />
         <Route path="/about" element={<AboutPage />} />
