@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { ethers } from 'ethers';
 //import PublicMintListener from './PublicMintListener';
+import { AuthContext  } from '../AuthContext'; //引進smartAccount
 
 // Assuming REACT_APP_RPC_URL and REACT_APP_PRIVATE_KEY are set in your .env file
 // const RPC_URL = process.env.REACT_APP_RPC_URL;
 // const PRIVATE_KEY = process.env.REACT_APP_PRIVATE_KEY;
 //const contractAddress = "0x1b31285934B8B638B42c1b06eF39d7796e3d6c26"; 
+
 const RPC_URL = process.env.REACT_APP_SEPOLIA_RPC_URL;
 const PRIVATE_KEY = process.env.REACT_APP_SDG_PRIVATE_KEY;
 const contractABI = require('../hooks/contractAbi_DAO.json');
@@ -17,10 +19,18 @@ const ContractsDao = () => {
   const [name, setName] = useState('Loading...');
   const [eventName, setEventName] = useState(null);
   const [contract, setContract] = useState(null);
-
+  const { CAaddress } = useContext(AuthContext);
+  
   useEffect(() => {
+
+    if(!CAaddress){ 
+
+      window.location.href = "./signin";
+    }else{
+
     const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
-    const signer = new ethers.Wallet(PRIVATE_KEY, provider);
+    //const signer = new ethers.Wallet(PRIVATE_KEY, provider);
+    const signer = new ethers.Wallet(CAaddress, provider);
     const contractInstance = new ethers.Contract(contractAddress, contractABI, signer);
 
     // Set the contract instance in state
@@ -56,7 +66,7 @@ const ContractsDao = () => {
     };
 
     fetchContractData();
-
+    }
 
     return () => {
     //   if (contractInstance) {
@@ -69,10 +79,10 @@ const ContractsDao = () => {
 
   const handlePropose = async () => {
     // Update these values as needed for your propose call
-    const targets = ["0x0000000000000000000000000000000000000000"]; //actionplan contract
+    const targets = ["0xE9748e34c0705d67CdFaAAC2B3eE1031D6c146cF"]; //actionplan contract
     const values = [0]; //
-    const calldatas = ["0x"]; // This should be the actual calldata required by the target contract
-    const description = "描述"; // Description of the proposal
+    const calldatas = ["0x22"]; // This should be the actual calldata required by the target contract
+    const description = "Proposal #1"; // Description of the proposal
     
     const result = await contract.propose(targets, values, calldatas, description, {
       gasPrice: ethers.utils.parseUnits('10', 'gwei'), // Example gas price
