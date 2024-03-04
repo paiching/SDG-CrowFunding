@@ -24,6 +24,9 @@ export default function Header() {
           <Link to="/propose">
             <div className={styles.link}>提案</div>
           </Link>
+          <Link to="/dao">
+            <div className={styles.link}>DAO</div>
+          </Link>
           <Link to="/showcase">
             <div className={styles.link}>成果</div>
           </Link>

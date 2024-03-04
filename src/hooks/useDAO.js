@@ -26,13 +26,27 @@ export const useDAO = () => {
   const getName = async () => {
     if (!contract) return;
     try {
-      const name = await contract.name();
+      const name = await contract.getname();
       return name;
       //return ethers.utils.formatUnits(fetchedTotalSupply, 'ether');
     } catch (error) {
       console.error("Error fetching Name:", error);
     }
   };
+
+  // This function will retrieve all events from the contract
+  const getAllEvents = async () => {
+    if (!contract) return;
+  
+    try {
+      // Fetch all events from the contract's entire history
+      const events = await contract.queryFilter("*");
+      return events;
+    } catch (error) {
+      console.error("Error fetching events:", error);
+    }
+  };
+  
 
 
 
@@ -64,5 +78,5 @@ const mintBatchWithCA = async (payableAmount, ids, quantities) => {
     }
    };
 
-  return { contract, getName, mintBatchWithCA };
+  return { contract, getAllEvents,getName, mintBatchWithCA };
 };
