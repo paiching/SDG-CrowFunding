@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import './productlist.scss';
-// import { useAuth } from '../AuthContext';
-// import { useSmartContract } from '../hooks/useSmartContract';
-// import { useContract } from '../hooks/useContract';
+import { useAuth } from '../AuthContext';
+import { useSmartContract } from '../hooks/useSmartContract';
+import { useContract } from '../hooks/useContract';
 import { ethers } from 'ethers';
 
 // 產品介面
@@ -25,14 +25,31 @@ const initialProducts: Product[] = [
 ];
 
 const ProductList = () => {
-  // const { userInfo } = useAuth();
-  // const { CAaddress } = useAuth(); //signin 後會更新
-  // const { smartAccount } = useAuth();
+  const { userInfo } = useAuth();
+  const { CAaddress } = useAuth(); //signin 後會更新
+  const { smartAccount } = useAuth();
   const [products, setProducts] = useState<Product[]>(initialProducts);
-  // const { ethBalance, caAddress, eoaAddress, fetchEthBalance } = useSmartContract();
-  // const { contract, fetchTreasury, mintBatchA, mintBatchWithCA } = useContract();
+  const { ethBalance, caAddress, eoaAddress, fetchEthBalance } = useSmartContract();
+  const { contract, fetchTreasury, mintBatchA, mintBatchWithCA } = useContract();
   const [totalSupply, setTotalSupply] = useState('Loading...');
 
+  useEffect(() => {
+    fetchEthBalance();
+  }, [fetchEthBalance]); // Fetch balance when the component mounts
+
+  useEffect(() => {
+    // This effect runs when ethBalance changes
+    if (ethBalance !== null) {
+      console.log(`Balance: ${ethBalance}`);
+    }
+  }, [ethBalance]); // ethBalance is a dependency of this effect
+  
+  useEffect(() => {
+    fetchTreasury().then(supply => {
+      setTotalSupply(supply);
+      console.log("Treasury TotalSupply:"+totalSupply);
+    });
+  }, [fetchTreasury]);
 
   // 處理數量變化
   const handleQuantityChange = (id: number, quantity: number) => {
@@ -53,11 +70,11 @@ const ProductList = () => {
 
   // 顯示總金額
   const handleMint = async () => {
-    // if (!userInfo) {
-    //   alert('请先登录');
-    //   window.location.href = '/signin';
-    //   return;
-    // }
+    if (!userInfo) {
+      alert('请先登录');
+      window.location.href = '/signin';
+      return;
+    }
 
     const totalAmount = calculateTotal();
     // const ids = products.map(p => p.id);
@@ -70,13 +87,13 @@ const ProductList = () => {
       const payableAmount = ethers.utils.parseUnits("0.0001", "ether"); // Convert to the correct unit
       const ids = [0, 1, 2, 3]; // Your token IDs
       const quantities = [0, 0, 0, 1]; // Corresponding quantities
-     // const txReceipt = await mintBatchWithCA("0.0001", ids, quantities);
+      const txReceipt = await mintBatchWithCA("0.0001", ids, quantities);
       //const txReceipt = await mintBatchA(0.001, ids, quantities);
       //const txReceipt = await smartAccount.mintBatch(totalAmount, ids, quantities);
   
       // const tx = await smartAccount.mintBatch(payableAmount, ids, quantities, { value: payableAmount });
       // const txReceipt = await tx.wait();
-      //console.log('Minted successfully: address'+caAddress+" | ", txReceipt);
+      console.log('Minted successfully: address'+caAddress+" | ", txReceipt);
     } catch (error) {
       console.error('Error during minting:', error);
       alert('鑄造过程中发生错误');

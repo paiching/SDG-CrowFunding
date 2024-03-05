@@ -12,6 +12,7 @@ const ContractsDao = () => {
   const [description, setDescription] = useState('');
   const [events, setEvents] = useState([]);
   const [name, setName] = useState('Loading...');
+  const [ProposalVotes, setProposalVotes] = useState(); //投票的票數
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   const [contract, setContract] = useState(null);
   const [ActionContract, setActionContract] = useState(null);
@@ -59,8 +60,9 @@ const ContractsDao = () => {
             //setActionContract(ActioncontractInstance);
             fetchContractName(contractInstance);
             if (contract) {
-              listenForEvents(contract);
+              listenForEvents(contract); //處理Events的資料轉換 ProposalId 與投票數
             }
+
           } else {
             setName('Please connect your wallet');
           }
@@ -87,6 +89,15 @@ const ContractsDao = () => {
     }
   };
 
+  const getProposalVotes = async (contractInstance,proposalId) => {
+    try {
+      const ProposalVotes = await contractInstance.proposalVotes(proposalId);
+      setProposalVotes(ProposalVotes);
+    } catch (error) {
+      console.error("Error fetching contract name:", error);
+    }
+  };
+
   const listenForEvents = async (contractInstance) => {
     try {
       const eventName = "ProposalCreated";
@@ -104,14 +115,17 @@ const ContractsDao = () => {
         // 使用await来等待异步查询状态
         const proposalState = await contractInstance.state(proposalIdDecimal);
 
+        const ProposalVotes = await contractInstance.proposalVotes(proposalIdDecimal);
+
         const userHasVoted = await checkIfUserHasVoted(contractInstance, proposalIdDecimal, userAddress);
-  
+
         // 返回处理后的事件对象，包括提案状态
         return {
           ...event.args,
           proposalIdDecimal,
           proposalState,
-          userHasVoted
+          userHasVoted,
+          ProposalVotes
         };
       }));
   
@@ -193,22 +207,9 @@ const ContractsDao = () => {
 
   //tabs
 
-  const handleInputChange = (e, index) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
-  
-    // Check if the change is for the proposalDetails field
-    if (name.startsWith("proposalDetail")) {
-      const updatedDetails = formData.proposalDetails.map((detail, detailIndex) => {
-        if (index === detailIndex) {
-          return { ...detail, detail: value };
-        }
-        return detail;
-      });
-      setFormData({ ...formData, proposalDetails: updatedDetails });
-    } else {
-      // Handle other fields
-      setFormData({ ...formData, [name]: value });
-    }
+    setFormData({ ...formData, [name]: value });
   };
   
   
@@ -222,14 +223,31 @@ const ContractsDao = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent default form submission behavior
-    
-    // Combine form data into a JSON string
+    e.preventDefault();
     const descriptionJSON = JSON.stringify(formData);
-    
-    console.log(descriptionJSON);
-    // Call handlePropose with the combined JSON string as description
-    //await handlePropose(descriptionJSON);
+    // Start processing
+    setIsSubmitting(true);
+    setSubmissionStatus('Processing...');
+
+    try {
+    await handlePropose(descriptionJSON);
+
+    setSubmissionStatus('Proposal submitted successfully!');
+
+    // Reset the form if needed
+    setFormData({
+      proposalName: '',
+      proposalCategory: '',
+      proposalDetails: [{ detail: '' }]
+    });
+
+    }catch (error) {
+      console.error("Error submitting proposal:", error);
+      setSubmissionStatus('Failed to submit proposal.');
+    } finally {
+      setIsSubmitting(false);
+    }
+
   };
   
 
@@ -239,29 +257,29 @@ const ContractsDao = () => {
     }
     if (contract) {
       setIsSubmitting(true); // Start the submission process
-      setSubmissionStatus('Processing...'); // Set the status message
+      setSubmissionStatus('處理中...'); // Set the status message
       const targets = ["0xE9748e34c0705d67CdFaAAC2B3eE1031D6c146cF"];
       const values = [0];
       const calldatas = ["0x42"];
       try {
         const transactionResponse = await contract.propose(targets, values, calldatas, description, {
-          gasPrice: ethers.utils.parseUnits('10', 'gwei'),
+          gasPrice: ethers.utils.parseUnits('5', 'gwei'),
           gasLimit: 1000000
         });
         console.log(transactionResponse);
         // Wait for one confirmation to ensure the event is emitted
         await transactionResponse.wait(1);
         // Update the status message
-        setSubmissionStatus('Proposal submitted successfully!');
+        setSubmissionStatus('提案發佈成功!');
         setIsSubmitting(false); // End the submission process
         setDescription('');
         // Fetch and display new events
         await listenForEvents(contract);
-        alert('Proposal submitted successfully.');
+        alert('提案發佈成功');
 
       } catch (error) {
         console.error("Error submitting proposal:", error);
-        setSubmissionStatus('Failed to submit proposal.');
+        setSubmissionStatus('提案發佈失敗');
         setIsSubmitting(false); // End the submission process
       }
     }
@@ -298,86 +316,58 @@ const ContractsDao = () => {
 
   return (
     <div className='proposalContainer'>
-      
+      {/* Display submission status */}
+    {isSubmitting && <div className="submission-status">{submissionStatus}</div>}
       <button onClick={() => switchTab('form')}>發起提案</button>
       <button onClick={() => switchTab('events')}>投票表決</button>
 
       {tab === 'form' && (
-  <div className={styles.wrapper}>
-    <form onSubmit={handleSubmit} className={styles.formContainer}>
-      <div className={styles.formGroup}>
-        <label htmlFor="proposalName" className={styles.label}>提案名稱</label>
-        <input
-          id="proposalName"
-          type="text"
-          name="proposalName"
-          value={formData.proposalName}
-          onChange={handleInputChange}
-          className={styles.input}
-        />
-      </div>
-      <div className={styles.formGroup}>
-        <label htmlFor="proposalCategory" className={styles.label}>提案類別</label>
-        <select
-          id="proposalCategory"
-          name="proposalCategory"
-          value={formData.proposalCategory}
-          onChange={handleInputChange}
-          className={styles.select}
-        >
-          <option value="">請選擇類別</option>
-          {[...Array(17)].map((_, index) => (
-            <option key={index} value={index + 1}>{index + 1}</option>
-          ))}
-        </select>
-      </div>
-      <div className={styles.formGroup}>
-        <label htmlFor="proposalAmount" className={styles.label}>提案金額</label>
-        <input
-          id="proposalAmount"
-          type="number"
-          name="proposalAmount"
-          value={formData.proposalAmount}
-          onChange={handleInputChange}
-          className={styles.input}
-        />
-      </div>
-      <div className={styles.formGroup}>
-        <label htmlFor="proposalStartDate" className={styles.label}>提案開始時間</label>
-        <input
-          id="proposalStartDate"
-          type="date"
-          name="proposalStartDate"
-          value={formData.proposalStartDate}
-          onChange={handleInputChange}
-          className={styles.input}
-        />
-      </div>
-      <div className={styles.formGroup}>
-        <label htmlFor="proposalEndDate" className={styles.label}>提案結束時間</label>
-        <input
-          id="proposalEndDate"
-          type="date"
-          name="proposalEndDate"
-          value={formData.proposalEndDate}
-          onChange={handleInputChange}
-          className={styles.input}
-        />
-      </div>
-      <div className={styles.formGroup}>
-        <label htmlFor="proposalDetail" className={styles.label}>提案內容</label>
-        <textarea
-          id="proposalDetail"
-          name="proposalDetail"
-          value={formData.proposalDetail}
-          onChange={handleInputChange}
-          className={styles.textarea}
-        />
-      </div>
-      <button type="submit" className={styles.submitButton}>提交提案</button>
-    </form>
-  </div>
-)}
+        <div className={styles.wrapper}>
+          <form onSubmit={handleSubmit} className={styles.formContainer}>
+            {/* Disable the form elements based on isSubmitting state */}
+          <fieldset disabled={isSubmitting}>
+            <div className={styles.formGroup}>
+              <label htmlFor="proposalName" className={styles.label}>提案名稱</label>
+              <input
+                id="proposalName"
+                type="text"
+                name="proposalName"
+                value={formData.proposalName}
+                onChange={handleInputChange}
+                className={styles.input}
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label htmlFor="proposalCategory" className={styles.label}>提案類別</label>
+              <select
+                id="proposalCategory"
+                name="proposalCategory"
+                value={formData.proposalCategory}
+                onChange={handleInputChange}
+                className={styles.select}
+              >
+                <option value="">請選擇類別</option>
+                {[...Array(17)].map((_, index) => (
+                  <option key={index} value={index + 1}>{`行動分類 ${index + 1}`}</option>
+                ))}
+              </select>
+            </div>
+      
+            <div className={styles.formGroup}>
+              <label htmlFor="proposalDetail" className={styles.label}>提案內容</label>
+              <textarea
+                id="proposalDetail"
+                name="proposalDetail"
+                value={formData.proposalDetail}
+                onChange={handleInputChange}
+                className={styles.textarea}
+              />
+            </div>
+            <button type="submit" className={styles.submitButton}>提交提案</button>
+            </fieldset>
+          </form>
+        </div>
+      )}
 
 
     {tab === 'events' && (
@@ -389,13 +379,38 @@ const ContractsDao = () => {
           // And event.proposalState is the number representing the state
           const proposalStateString = getProposalStateString(event.proposalState);
 
+          let proposalName, proposalCategory, proposalDetail;
+          try {
+            // Parse the description from the JSON string
+            const descriptionObj = JSON.parse(event.description);
+            // Extract the values for display
+            proposalName = descriptionObj.proposalName;
+            proposalCategory = descriptionObj.proposalCategory;
+            proposalDetail = descriptionObj.proposalDetail || (descriptionObj.proposalDetails && descriptionObj.proposalDetails[0].detail);
+          } catch (e) {
+            console.error('Error parsing description:', e);
+            // Handle the error according to your needs, e.g., set default values
+            proposalName = 'Unknown';
+            proposalCategory = 'Unknown';
+            proposalDetail = 'Details are not available';
+          }
+
           return (
             <div key={index} className="event-card">
               <p>ID: {event.proposalIdDecimal}</p>
               <p>Proposer: {event.proposer}</p>
               {/* ... other event details ... */}
-              <p>Description: {event.description}</p>
+              <p>標題: {proposalName}</p>
+              <p>類型: {proposalCategory}</p>
+              <p>內容: {proposalDetail}</p>
+              
               <p>State: {proposalStateString}</p> {/* Display the state string */}
+              {/* Display the ProposalVotes counts */}
+              <div className="vote-flex">
+              <div><p>反對數: {event.ProposalVotes.againstVotes.toString()}</p></div>
+              <div><p>贊成數: {event.ProposalVotes.forVotes.toString()}</p></div>
+              <div><p>棄票數: {event.ProposalVotes.abstainVotes.toString()}</p></div>
+              </div>
               {event.proposalState === 1 && userVoteRight > 0 &&!event.userHasVoted ? (
                 <div>
                   <button onClick={() => handleVote(event.proposalIdDecimal, 0)}>反對</button>
@@ -410,7 +425,7 @@ const ContractsDao = () => {
           );
         })
       ) : (
-        <p>No events to display</p>
+        <p>讀取中...</p>
       )}
       {events.length > displayedEvents.length && (
         <button onClick={loadMore}>Load More</button>

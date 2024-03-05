@@ -18,7 +18,7 @@ export default function Header() {
           <div className={styles.logo}>SDG 募資平台</div>
         </Link>
          <div className={`${styles.menuItem} ${isMenuOpen ? styles.menuOpen : ''}`}>
-          <Link to="/explore">
+          {/* <Link to="/explore">
             <div className={styles.link}>探索</div>
           </Link>
           <Link to="/propose">
@@ -26,13 +26,13 @@ export default function Header() {
           </Link>
           <Link to="/usedao">
             <div className={styles.link}>UseDAO</div>
-          </Link>
+          </Link> */}
           <Link to="/dao">
             <div className={styles.link}>DAO</div>
           </Link>
-          <Link to="/showcase">
+          {/* <Link to="/showcase">
             <div className={styles.link}>成果</div>
-          </Link>
+          </Link> */}
           <Link to="/products">
             <div className={styles.link}>NFT</div>
           </Link>
@@ -47,12 +47,12 @@ export default function Header() {
         </button>
       </div>
       <div className={styles.account}>
-        <p className={styles.balance}>Balance: {balanceDec.toFixed(2)}</p>
+        {/* <p className={styles.balance}>Balance: {balanceDec.toFixed(2)}</p>
         <p className={styles.balance}>購物車</p>
         <p className={styles.balance}>
           <Link to="/signin">
             <div className={styles.link}>登入</div>
-          </Link> </p>
+          </Link> </p> */}
         {/* <ConnectButton /> Placeholder for ConnectButton or similar functionality */}
       </div>
     </div>
