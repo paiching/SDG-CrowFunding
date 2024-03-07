@@ -2,14 +2,52 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Decimal from 'decimal.js';
 import styles from './Header.module.scss';
+import { useAuth } from '../AuthContext';
+import { ethers } from 'ethers';
 
 export default function Header() {
   const [balanceDec, setBalanceDec] = useState(new Decimal(0));
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { userAddress, setUserAddress, setSigner } = useAuth();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+
+  const handleConnectWallet = async () => {
+    console.log("sssd");
+    if (window.ethereum) {
+      console.log("get signer");
+      try {
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        const address = await signer.getAddress();
+        setUserAddress(address); // Store user address in context
+        setSigner(signer); // 使用新的签名者更新全局状态
+        console.log(signer);
+      } catch (error) {
+        console.error("连接钱包时出错:", error);
+      }
+    } else {
+      console.error('未安装MetaMask');
+    }
+  };
+
+  const handleDisconnectWallet = () => {
+    // Simple confirmation dialog to confirm wallet disconnection
+    const willDisconnect = window.confirm("Are you sure you want to disconnect your wallet?");
+    if (willDisconnect) {
+      // Reset the context state
+      setUserAddress('');
+      setSigner(null);
+    }
+  };
+
+   // Truncate the address for display purposes
+   const truncatedAddress = userAddress ? 
+   `${userAddress.substring(0, 6)}...${userAddress.substring(userAddress.length - 4)}` : '';
+
 
   return (
     <div className={styles.header}>
@@ -46,15 +84,23 @@ export default function Header() {
           <span className={styles.hamburgerLine}></span>
         </button>
       </div>
-      <div className={styles.account}>
-        {/* <p className={styles.balance}>Balance: {balanceDec.toFixed(2)}</p>
-        <p className={styles.balance}>購物車</p>
-        <p className={styles.balance}>
-          <Link to="/signin">
-            <div className={styles.link}>登入</div>
-          </Link> </p> */}
-        {/* <ConnectButton /> Placeholder for ConnectButton or similar functionality */}
+      {userAddress ? (
+    <button 
+      onClick={handleDisconnectWallet} 
+      className={`${styles.buttonStyle} ${styles.disconnectButton}`}
+    >
+      {truncatedAddress}
+    </button>
+  ) : (
+    <button 
+      onClick={handleConnectWallet} 
+      className={styles.buttonStyle}
+    >
+      連結錢包
+    </button>
+  )}
+        {/* ... other elements */}
       </div>
-    </div>
+   
   );
 }

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import './productlist.scss';
-// import { useAuth } from '../AuthContext';
+import { useAuth } from '../AuthContext';
+import NFTcontractABI from '../hooks/contractAbi_NFT.json';
 // import { useSmartContract } from '../hooks/useSmartContract';
 // import { useContract } from '../hooks/useContract';
 import { ethers } from 'ethers';
-
+import { Contract } from 'ethers';
 // 產品介面
 interface Product {
   id: number;
@@ -15,24 +16,50 @@ interface Product {
   imageUrl: string; // 新增圖片URL屬性
 }
 
+const TokenContractAddress = "0x78EE555683Ac65e61C8830840e758a9622bc473C";
 // 初始產品列表
 const initialProducts: Product[] = [
-  { id: 0, name: '消除貧窮(普通)', price: 0.001, description: 'DAO權重 X 1', quantity: 0 ,imageUrl: '/icons/goal-1/GOAL_1_TARGETS/GOAL_1_TARGETS_PNG/GOAL_1_TARGET_1.1.png' },
+  { id: 0, name: '消除貧窮(普通)', price: 0.0001, description: 'DAO權重 X 1', quantity: 0 ,imageUrl: '/icons/goal-1/GOAL_1_TARGETS/GOAL_1_TARGETS_PNG/GOAL_1_TARGET_1.1.png' },
   //SDG-CrowdFunding\public\icons\goal-1\GOAL_1_TARGETS\GOAL_1_TARGETS_PNG\GOAL_1_TARGET_1.1.png
-  { id: 1, name: '消除貧窮(經典)', price: 0.001, description: 'DAO權重 X 3', quantity: 0 ,imageUrl: '/icons/goal-1/GOAL_1_TARGETS/GOAL_1_TARGETS_PNG/GOAL_1_TARGET_1.2.png'},
-  { id: 2, name: '消除貧窮(史詩)', price: 0.001, description: 'DAO權重 X 6', quantity: 0 ,imageUrl: '/icons/goal-1/GOAL_1_TARGETS/GOAL_1_TARGETS_PNG/GOAL_1_TARGET_1.3.png'},
-  { id: 3, name: '消除貧窮(傳說)', price: 0.001, description: 'DAO權重 X 10', quantity: 0 ,imageUrl: '/icons/goal-1/GOAL_1_TARGETS/GOAL_1_TARGETS_PNG/GOAL_1_TARGET_1.B.png'},
+  { id: 1, name: '消除貧窮(經典)', price: 0.0001, description: 'DAO權重 X 3', quantity: 0 ,imageUrl: '/icons/goal-1/GOAL_1_TARGETS/GOAL_1_TARGETS_PNG/GOAL_1_TARGET_1.2.png'},
+  { id: 2, name: '消除貧窮(史詩)', price: 0.0001, description: 'DAO權重 X 6', quantity: 0 ,imageUrl: '/icons/goal-1/GOAL_1_TARGETS/GOAL_1_TARGETS_PNG/GOAL_1_TARGET_1.3.png'},
+  { id: 3, name: '消除貧窮(傳說)', price: 0.0001, description: 'DAO權重 X 10', quantity: 0 ,imageUrl: '/icons/goal-1/GOAL_1_TARGETS/GOAL_1_TARGETS_PNG/GOAL_1_TARGET_1.B.png'},
 ];
 
 const ProductList = () => {
+  
   // const { userInfo } = useAuth();
   // const { CAaddress } = useAuth(); //signin 後會更新
   // const { smartAccount } = useAuth();
+  const [ userAddress,setUserAddress] = useState<string | undefined>(undefined);
+  const { signer } = useAuth(); //全局變數
+  const [ tokenContract, setTokenContract] = useState<Contract | null>(null);
   const [products, setProducts] = useState<Product[]>(initialProducts);
   // const { ethBalance, caAddress, eoaAddress, fetchEthBalance } = useSmartContract();
   // const { contract, fetchTreasury, mintBatchA, mintBatchWithCA } = useContract();
   const [totalSupply, setTotalSupply] = useState('Loading...');
 
+
+  useEffect(() => {
+    const init = async () => { //初始化
+        if (signer) {
+          const address = await signer.getAddress();
+          setUserAddress(address);
+          console.log("signer address:", address);
+            
+          const TokenInstance = new ethers.Contract(TokenContractAddress, NFTcontractABI, signer);
+          setTokenContract(TokenInstance);
+          //const votes = await TokenInstance.getVotes(address);
+          //setUserVoteRight(votes);
+
+            // Now that the contract is set, fetch events or listen for events  
+        } else {
+          setUserAddress(undefined);
+        }
+    };
+
+    init(); //執行初始化
+}, [signer]); //依賴signer執行
 
   // 處理數量變化
   const handleQuantityChange = (id: number, quantity: number) => {
@@ -46,40 +73,46 @@ const ProductList = () => {
   };
   
 
-  // 計算總金額
-  const calculateTotal = () => {
-    return products.reduce((total, product) => total + product.price * product.quantity, 0);
-  };
+// 計算總金額
+const calculateTotal = () => {
+  const total = products.reduce((sum, product) => {
+    // Use the Number type to avoid string concatenation
+    const productTotal = Number(product.price) * product.quantity;
+    // Add the product total to the running sum
+    return sum + productTotal;
+  }, 0);
+  // Use toFixed to limit the number of decimal places, then convert back to Number to strip trailing zeroes
+  return Number(total.toFixed(4));
+};
+
 
   // 顯示總金額
   const handleMint = async () => {
-    // if (!userInfo) {
-    //   alert('请先登录');
-    //   window.location.href = '/signin';
-    //   return;
-    // }
+   if (!signer) {
+      alert('請先連結您的錢包');
+      return;
+    }
 
     const totalAmount = calculateTotal();
-    // const ids = products.map(p => p.id);
-    // const quantities = products.map(p => p.quantity);
 
-    // console.log("IDS"+ids);
-    // console.log("number"+quantities);
     try {
 
-      const payableAmount = ethers.utils.parseUnits("0.0001", "ether"); // Convert to the correct unit
-      const ids = [0, 1, 2, 3]; // Your token IDs
-      const quantities = [0, 0, 0, 1]; // Corresponding quantities
-     // const txReceipt = await mintBatchWithCA("0.0001", ids, quantities);
-      //const txReceipt = await mintBatchA(0.001, ids, quantities);
+      const payableAmount = ethers.utils.parseUnits(totalAmount.toString(), "ether"); //change to hex
+      const ids = products.map(p => p.id);
+      const quantities = products.map((product) => product.quantity);
+      console.log(payableAmount);
+      const transactionResponse = await tokenContract.mintBatch(ids, quantities,{
+        value: payableAmount // This value needs to be passed as transaction options
+      });
+      console.log(transactionResponse);
       //const txReceipt = await smartAccount.mintBatch(totalAmount, ids, quantities);
-  
-      // const tx = await smartAccount.mintBatch(payableAmount, ids, quantities, { value: payableAmount });
-      // const txReceipt = await tx.wait();
-      //console.log('Minted successfully: address'+caAddress+" | ", txReceipt);
+      //const tx = await smartAccount.mintBatch(payableAmount, ids, quantities, { value: payableAmount });
+      //const txReceipt = await tx.wait();
+      alert('NFT鑄造成功');
+      console.log('Minted successfully: address'+ transactionResponse);
     } catch (error) {
       console.error('Error during minting:', error);
-      alert('鑄造过程中发生错误');
+      alert('鑄造過程中發生錯誤');
     }
   };
 
@@ -104,10 +137,16 @@ const ProductList = () => {
           ))}
           <div className="total-amount-container">
             <div className="total-amount">
-              鑄造費用: {calculateTotal()}
+              鑄造費用: {calculateTotal()} Eth
             </div>
           </div>
-          <button className="mint-button" onClick={handleMint}>鑄造</button>
+          <button 
+            className="mint-button" 
+            onClick={handleMint}
+            disabled={!signer} // Disable the button if the wallet is not connected
+          >
+            {signer ? '鑄造' : '連結錢包'} 
+          </button>
         </div>
       </div>
     </>

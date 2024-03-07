@@ -4,11 +4,13 @@ import contractABI from '../hooks/contractAbi_DAO.json';
 import AcontractABI from '../hooks/contractAbi_Action.json';
 import NFTcontractABI from '../hooks/contractAbi_NFT.json';
 import styles from './Dao.scss'
+import { useAuth } from '../AuthContext';
 
-const contractAddress = "0xab9aC5bdCb810B2eE3D29EaBe55D6F9696037Fc3";
-const TokenContractAddress = "0x78EE555683Ac65e61C8830840e758a9622bc473C";
+const contractAddress = "0xF3116499767692201519949B8c20092419d12009";
+const TokenContractAddress = "0x86746fF42E7EC38A225d8C3005F7F2B7a18d137C";
 
 const ContractsDao = () => {
+  const { signer } = useAuth(); // 从全局上下文中访问签名者
   const [description, setDescription] = useState('');
   const [events, setEvents] = useState([]);
   const [name, setName] = useState('Loading...');
@@ -22,13 +24,17 @@ const ContractsDao = () => {
   const [submissionStatus, setSubmissionStatus] = useState('');
    // New state variables for submission status and sorted events
   const [sortedEvents, setSortedEvents] = useState([]);
-  const [signer, setSigner] =useState();
+  //const [signer, setSigner] =useState();
   const [ userAddress,setUserAddress] = useState();
   const [ userVoteRight,setUserVoteRight] = useState();
   //load more
   const [displayedEvents, setDisplayedEvents] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 10; // You can set this to however many events you want per page
+
+  const [selectedCategory, setSelectedCategory] = useState('all');
+
+
   //tabs
   const [tab, setTab] = useState('events'); // 'form' or 'events'
   const [formData, setFormData] = useState({
@@ -42,35 +48,34 @@ const ContractsDao = () => {
 
 
   useEffect(() => {
-    if (window.ethereum) {
-      window.ethereum.request({ method: 'eth_accounts' })
-        .then(async accounts => {
-          if (accounts.length > 0) {
+    const init = async () => {
+        if (signer) {
             setIsWalletConnected(true);
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            const signer = provider.getSigner();
-            const userAddress = await signer.getAddress();
-            console.log("signer address:", await signer.getAddress());
-            setUserAddress(userAddress);
+            const address = await signer.getAddress();
+            setUserAddress(address);
+            console.log("signer address:", address);
+            
             const contractInstance = new ethers.Contract(contractAddress, contractABI, signer);
             setContract(contractInstance);
-            const TokenInstance = new ethers.Contract(TokenContractAddress, NFTcontractABI, signer);
-            const userVoteRight = await TokenInstance.getVotes(userAddress);
-            setUserVoteRight(userVoteRight);
-            //setActionContract(ActioncontractInstance);
-            fetchContractName(contractInstance);
-            if (contract) {
-              listenForEvents(contract); //處理Events的資料轉換 ProposalId 與投票數
-            }
 
-          } else {
-            setName('Please connect your wallet');
-          }
-        });
-    } else {
-      setName('MetaMask is not installed');
-    }
-  }, []);
+            const TokenInstance = new ethers.Contract(TokenContractAddress, NFTcontractABI, signer);
+            const votes = await TokenInstance.getVotes(address);
+            setUserVoteRight(votes);
+
+            // Now that the contract is set, fetch events or listen for events
+            await listenForEvents(contractInstance); // Make sure this is awaited
+            //setEvents(Initevents);
+        } else {
+          setIsWalletConnected(false);
+          setUserAddress(undefined);
+          setContract(null);
+          setEvents([]); // Clear the events
+          setDisplayedEvents([]); // Clear the displayed events
+        }
+    };
+
+    init();
+}, [signer]);
 
 
   useEffect(() => {
@@ -87,6 +92,36 @@ const ContractsDao = () => {
       console.error("Error fetching contract name:", error);
       setName('Error fetching contract name');
     }
+  };
+
+  useEffect(() => {
+    console.log("Selected Category: ", selectedCategory); // Log the selected category
+    if (selectedCategory === 'all') {
+      setDisplayedEvents(events.slice(0, currentPage * pageSize));
+    } else {
+      const filteredEvents = events.filter((event) => {
+        let category;
+        try {
+          const descriptionObj = JSON.parse(event.description);
+          // Assuming proposalCategory is an index number, not the full string
+          category = `行動分類 ${descriptionObj.proposalCategory}`;
+        } catch (e) {
+          console.error('Error parsing description:', e);
+          category = 'Unknown';
+        }
+        // Now compare both as strings
+        return category === selectedCategory;
+      });
+      
+      console.log("Filtered Events: ", filteredEvents); // Log the filtered events
+      setDisplayedEvents(filteredEvents.slice(0, currentPage * pageSize));
+    }
+  }, [selectedCategory, events, currentPage]);
+  
+  
+
+  const handleCategoryChange = (e) => {
+    setSelectedCategory(e.target.value);
   };
 
   const getProposalVotes = async (contractInstance,proposalId) => {
@@ -118,6 +153,7 @@ const ContractsDao = () => {
         const ProposalVotes = await contractInstance.proposalVotes(proposalIdDecimal);
 
         const userHasVoted = await checkIfUserHasVoted(contractInstance, proposalIdDecimal, userAddress);
+       // const userHasVoted = await contractInstance.(contractInstance, proposalIdDecimal, userAddress);
 
         // 返回处理后的事件对象，包括提案状态
         return {
@@ -304,9 +340,24 @@ const ContractsDao = () => {
       // You'll need to implement the voting logic here
       // This might involve interacting with a smart contract function
       console.log(`Voting on proposal ${proposalId} with vote type ${voteType}`);
-      // Example:
-      // const tx = await contractInstance.vote(proposalId, voteType);
-      // await tx.wait();
+      try {
+        const transactionResponse = await contract.castVote(proposalId, voteType, {
+          gasPrice: ethers.utils.parseUnits('5', 'gwei'),
+          gasLimit: 1000000
+        });
+
+        console.log(transactionResponse);
+        // Wait for one confirmation to ensure the event is emitted
+        await transactionResponse.wait(1);
+        // Update the status message
+        setSubmissionStatus('投票成功!');
+        alert('提案發佈成功');
+
+      } catch (error) {
+        console.error("Error submitting proposal:", error);
+        setSubmissionStatus('提案發佈失敗');
+        setIsSubmitting(false); // End the submission process
+      }
     };
     
     const switchTab = (selectedTab) => {
@@ -315,7 +366,14 @@ const ContractsDao = () => {
     
 
   return (
-    <div className='proposalContainer'>
+    <div className='proposalContainer pageHiight'>
+              <select onChange={handleCategoryChange} value={selectedCategory} className={styles.select}>
+                <option value="all">全部類別</option>
+                {/* Map over some predefined categories or dynamically create this list */}
+                {[...Array(17)].map((_, index) => (
+                  <option key={index} value={`行動分類 ${index + 1}`}>{`行動分類 ${index + 1}`}</option>
+                ))}
+              </select>      
       {/* Display submission status */}
     {isSubmitting && <div className="submission-status">{submissionStatus}</div>}
       <button onClick={() => switchTab('form')}>發起提案</button>
@@ -371,6 +429,7 @@ const ContractsDao = () => {
 
 
     {tab === 'events' && (
+      
       <div className="displayContainer">
         
       {displayedEvents.length > 0 ? (
@@ -396,9 +455,14 @@ const ContractsDao = () => {
           }
 
           return (
+
+            
+            <div className="">
+
+
             <div key={index} className="event-card">
               <p>ID: {event.proposalIdDecimal}</p>
-              <p>Proposer: {event.proposer}</p>
+              {/* <p>Proposer: {event.proposer}</p> */}
               {/* ... other event details ... */}
               <p>標題: {proposalName}</p>
               <p>類型: {proposalCategory}</p>
@@ -422,12 +486,22 @@ const ContractsDao = () => {
                 <p>您已經投過票</p>
               ) : null}
             </div>
+                    </div>
           );
         })
       ) : (
-        <p>讀取中...</p>
+        <div>
+        {signer ? (
+          <p>讀取中...</p>
+        ) : (
+          <div className="pageHight">
+          <p>請連結錢包...</p>
+          </div>
+        )}
+      </div>
+        
       )}
-      {events.length > displayedEvents.length && (
+      {events.length > displayedEvents.length && displayedEvents.length > 0 && (
         <button onClick={loadMore}>Load More</button>
       )}
     </div>
