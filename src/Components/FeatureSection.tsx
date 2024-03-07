@@ -6,6 +6,7 @@ import NFTcontractABI from '../hooks/contractAbi_NFT.json';
 
 import { useAuth } from '../AuthContext';
 import { Link } from 'react-router-dom';
+import { Contract, ethers } from 'ethers';
 
 const contractAddress = "0xF3116499767692201519949B8c20092419d12009";
 const TokenContractAddress = "0x86746fF42E7EC38A225d8C3005F7F2B7a18d137C";
@@ -24,6 +25,10 @@ export default function FeatureSection() {
   const [activeIndex, setActiveIndex] = useState(0);
   const { signer } = useAuth(); // 从全局上下文中访问签名者
   const [image, setImage] = useState(placeholderImage); // Set the default image
+  const [contract, setContract] = useState<Contract | null>(null);
+  const [events, setEvents] = useState<any>([]);
+  const [caseNumber, setCaseNumber] = useState<number>();
+
   // useEffect(() => {
   //   const intervalId = window.setInterval(() => {
   //     setActiveIndex((current) => (current === images.length - 1 ? 0 : current + 1));
@@ -33,6 +38,65 @@ export default function FeatureSection() {
   // }, []);
     // Function to toggle the mint popup visibility
 
+    useEffect(() => {
+      const init = async () => {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+          if (provider) {
+             
+              const contractInstance = new ethers.Contract(contractAddress, contractABI, provider);
+              setContract(contractInstance);
+              const TokenInstance = new ethers.Contract(TokenContractAddress, NFTcontractABI, provider);
+             
+          } else {
+
+          }
+      };
+  
+      init();
+  }, []);
+
+
+  useEffect(() => {
+    if (contract) {
+      listenForEvents(contract);
+    }
+  }, [contract]);
+
+  const listenForEvents = async (contractInstance) => {
+    try {
+      const eventName = "ProposalCreated";
+      const fromBlock = 0;
+      const toBlock = 'latest';
+  
+      const eventFilter = contractInstance.filters[eventName]();
+      const fetchedEvents = await contractInstance.queryFilter(eventFilter, fromBlock, toBlock);
+      
+      // 使用Promise.all等待所有的状态查询完成
+      const processedEvents = await Promise.all(fetchedEvents.map(async (event) => {
+        // 提案ID的BigNumber转换成字符串（十进制表示）
+        const proposalIdDecimal = event.args.proposalId.toString();
+        console.log("提案ID:"+proposalIdDecimal);
+        const proposalState = await contractInstance.state(proposalIdDecimal);
+        const ProposalVotes = await contractInstance.proposalVotes(proposalIdDecimal);
+
+        return {
+          ...event.args,
+          proposalIdDecimal,
+          proposalState,
+          ProposalVotes
+        };
+      }));
+  
+      console.log("長度"+processedEvents.length);
+      setCaseNumber(processedEvents.length);
+      setEvents(processedEvents); // Set the full list of events in reversed order
+
+    } catch (error) {
+      console.error("Error fetching events:", error);
+    }
+  };
+  
+
 
   return (
     <section className={styles.featureSection} style={{ backgroundImage: `url(${images[activeIndex]})` }}>
@@ -40,14 +104,16 @@ export default function FeatureSection() {
         <h1 className={styles.contentTitle }>SDG 募資行動計畫</h1>
         <div className='flex'>
           <div className={styles.minted}>
-            <span>
-              <span className={styles.bolderGreen}>122</span> 件提案進行中 <span className={styles.bolder}>|
+             
+              <span className={styles.bolderGreen}>{caseNumber}</span> 件提案進行中
+              {/* <span className={styles.bolder}>|
               </span> 已完成 <span className={styles.bolderBlue}>15</span> 件目標 <span className={styles.bolder}>|
-              </span> 已發行 <span className={styles.bolderOrange}>3,137</span> <span className={styles.bolder}>NFT</span>
-            </span>
+              </span> 已發行 <span className={styles.bolderOrange}>3,137</span> <span className={styles.bolder}>NFT
+              </span> */}
+           
           </div>
         </div>
-        <div className={styles.mtop10px}><p>完成任務並解鎖NFT</p>
+        <div className={styles.mtop10px}><p>立即鑄造NFT, 參與永續計畫 !</p>
           <div className={styles.mtop20px}>
             <button className={styles.button} >我要提案</button>
             <button className={styles.button}>了解更多</button>

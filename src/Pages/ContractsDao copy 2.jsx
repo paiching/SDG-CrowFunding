@@ -48,22 +48,20 @@ const ContractsDao = () => {
 
   useEffect(() => {
     const init = async () => {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-        if (provider) {
-           
-            const signer = provider.getSigner();
-            const address = await signer.getAddress();
+
+      
+        if (signer) {
             setIsWalletConnected(true);
+            const address = await signer.getAddress();
             setUserAddress(address);
             console.log("signer address:", address);
             
-            const contractInstance = new ethers.Contract(contractAddress, contractABI, provider);
+            const contractInstance = new ethers.Contract(contractAddress, contractABI, signer);
             setContract(contractInstance);
 
-            const TokenInstance = new ethers.Contract(TokenContractAddress, NFTcontractABI, provider);
+            const TokenInstance = new ethers.Contract(TokenContractAddress, NFTcontractABI, signer);
             const votes = await TokenInstance.getVotes(address);
             setUserVoteRight(votes);
-            console.log("vote right"+votes);
 
             // Now that the contract is set, fetch events or listen for events
             //await listenForEvents(contractInstance); // Make sure this is awaited
@@ -76,7 +74,7 @@ const ContractsDao = () => {
     };
 
     init();
-}, []);
+}, [signer]);
 
 
   useEffect(() => {
@@ -303,10 +301,6 @@ const ContractsDao = () => {
     };
 
     const handleVote = async (proposalId, voteType) => {
-
-      //這邊要檢查是否有votes
-      
-
       // You'll need to implement the voting logic here
       // This might involve interacting with a smart contract function
       console.log(`Voting on proposal ${proposalId} with vote type ${voteType}`);
@@ -450,11 +444,11 @@ const ContractsDao = () => {
               <p>State: {proposalStateString}</p> {/* Display the state string */}
               {/* Display the ProposalVotes counts */}
               <div className="vote-flex">
-              <div><p><span>反對數</span>: {event.ProposalVotes.againstVotes.toString()}</p></div>
-              <div><p><span>贊成數</span>: {event.ProposalVotes.forVotes.toString()}</p></div>
-              <div><p><span>棄票數</span>: {event.ProposalVotes.abstainVotes.toString()}</p></div>
+              <div><p>反對數: {event.ProposalVotes.againstVotes.toString()}</p></div>
+              <div><p>贊成數: {event.ProposalVotes.forVotes.toString()}</p></div>
+              <div><p>棄票數: {event.ProposalVotes.abstainVotes.toString()}</p></div>
               </div>
-              {event.proposalState === 1  &&!event.userHasVoted ? (
+              {event.proposalState === 1 && userVoteRight > 0 &&!event.userHasVoted ? (
                 <div>
                   <button onClick={() => handleVote(event.proposalIdDecimal, 0)}>反對</button>
                   <button onClick={() => handleVote(event.proposalIdDecimal, 1)}>贊成</button>
