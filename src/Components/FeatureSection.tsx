@@ -6,7 +6,7 @@ import NFTcontractABI from '../hooks/contractAbi_NFT.json';
 
 import { useAuth } from '../AuthContext';
 import { Link } from 'react-router-dom';
-import { Contract, ethers } from 'ethers';
+import { Contract, ethers, providers } from 'ethers';
 
 const contractAddress = "0xF3116499767692201519949B8c20092419d12009";
 const TokenContractAddress = "0x86746fF42E7EC38A225d8C3005F7F2B7a18d137C";
@@ -26,8 +26,11 @@ export default function FeatureSection() {
   const { signer } = useAuth(); // 从全局上下文中访问签名者
   const [image, setImage] = useState(placeholderImage); // Set the default image
   const [contract, setContract] = useState<Contract | null>(null);
+  const [TokenContract, setTokenContract] = useState<Contract | null>(null);
   const [events, setEvents] = useState<any>([]);
   const [caseNumber, setCaseNumber] = useState<number>();
+  const [provider, setProvider] = useState<any>();
+  const [treasury, setTreasury] = useState<string>();
 
   // useEffect(() => {
   //   const intervalId = window.setInterval(() => {
@@ -40,27 +43,46 @@ export default function FeatureSection() {
 
     useEffect(() => {
       const init = async () => {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-          if (provider) {
-             
-              const contractInstance = new ethers.Contract(contractAddress, contractABI, provider);
-              setContract(contractInstance);
-              const TokenInstance = new ethers.Contract(TokenContractAddress, NFTcontractABI, provider);
-             
-          } else {
-
-          }
+        if (window.ethereum) {
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
+          setProvider(provider);
+          const contractInstance = new ethers.Contract(contractAddress, contractABI, provider);
+          setContract(contractInstance);
+          const TokenInstance = new ethers.Contract(TokenContractAddress, NFTcontractABI, provider);
+          setTokenContract(TokenInstance);
+        } else {
+          alert("請安裝MetaMask!");
+        }
       };
-  
+    
       init();
-  }, []);
+    }, []);
+    
+    useEffect(() => {
+      const fetchTreasury = async () => {
+        if (TokenContract) {
+          try {
+            // Get the treasury address
+            const treasuryAddress = await TokenContract.treasury();
+            console.log(`Treasury address: ${treasuryAddress}`);
+    
+            // Get the balance of the treasury address
+            const balance = await provider.getBalance(treasuryAddress);
+            console.log(`Treasury Balance: ${ethers.utils.formatEther(balance)} ETH`);
+            setTreasury(ethers.utils.formatEther(balance).toString());
 
-
-  useEffect(() => {
-    if (contract) {
-      listenForEvents(contract);
-    }
-  }, [contract]);
+          } catch (error) {
+            console.error("Error fetching treasury balance:", error);
+          }
+        }
+      };
+    
+      if (contract) {
+        listenForEvents(contract);
+      }
+      fetchTreasury();
+    }, [contract, TokenContract]); // 依赖数组中应包含TokenContract
+    
 
   const listenForEvents = async (contractInstance) => {
     try {
@@ -105,11 +127,11 @@ export default function FeatureSection() {
         <div className='flex'>
           <div className={styles.minted}>
              
-              <span className={styles.bolderGreen}>{caseNumber}</span> 件提案進行中
-              {/* <span className={styles.bolder}>|
-              </span> 已完成 <span className={styles.bolderBlue}>15</span> 件目標 <span className={styles.bolder}>|
-              </span> 已發行 <span className={styles.bolderOrange}>3,137</span> <span className={styles.bolder}>NFT
-              </span> */}
+              <span className={styles.bolderGreen}>{caseNumber}</span> 件提案計畫進行中
+              <span className={styles.bolder}> |
+              {/* </span> 已完成 <span className={styles.bolderBlue}>15</span> 件目標 <span className={styles.bolder}>| */}
+              </span> 已募資 <span className={styles.bolderOrange}>{treasury}</span> <span className={styles.bolder}>ETH
+              </span>
            
           </div>
         </div>
