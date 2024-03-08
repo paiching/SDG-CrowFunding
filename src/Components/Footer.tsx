@@ -41,10 +41,9 @@ const Footer = () => {
           </div>
         </div>
         <div className={styles.footerInfo}>
-          <span>SDG CrowdFunding</span>
+          <span>SDGs DAO</span>
           <div className={styles.footerLine}></div>
-          <span>SDG 行動募資平台 © 2024</span>
-          <span>SDG行動股份有限公司 統一編號 XXXXX </span>
+          <span>SDGs 分散式自治組織 © 2024</span>
         </div>
       </footer>
     );

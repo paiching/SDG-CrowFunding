@@ -71,18 +71,18 @@ const ContractsDao = () => {
         if (provider) {
            
             const signer = provider.getSigner();
-            const address = await signer.getAddress();
-            setIsWalletConnected(true);
-            setUserAddress(address);
-            console.log("signer address:", address);
+            // const address = await signer.getAddress();
+            // setIsWalletConnected(true);
+            // setUserAddress(address);
+            // console.log("signer address:", address);
             
             const contractInstance = new ethers.Contract(contractAddress, contractABI, provider);
             setContract(contractInstance);
 
             const TokenInstance = new ethers.Contract(TokenContractAddress, NFTcontractABI, provider);
-            const votes = await TokenInstance.getVotes(address);
-            setUserVoteRight(votes);
-            console.log("vote right"+votes);
+            // const votes = await TokenInstance.getVotes(address);
+            // setUserVoteRight(votes);
+            // console.log("vote right"+votes);
 
             // Now that the contract is set, fetch events or listen for events
             //await listenForEvents(contractInstance); // Make sure this is awaited
@@ -176,7 +176,7 @@ const ContractsDao = () => {
 
         const ProposalVotes = await contractInstance.proposalVotes(proposalIdDecimal);
 
-        const userHasVoted = await contractInstance.hasVoted(proposalIdDecimal, userAddress);
+        //const userHasVoted = await contractInstance.hasVoted(proposalIdDecimal, userAddress);
         //const userHasVoted = await checkIfUserHasVoted(contractInstance, proposalIdDecimal, userAddress);
         
        // const userHasVoted = await contractInstance.(contractInstance, proposalIdDecimal, userAddress);
@@ -186,7 +186,7 @@ const ContractsDao = () => {
           ...event.args,
           proposalIdDecimal,
           proposalState,
-          userHasVoted,
+          //userHasVoted,
           ProposalVotes
         };
       }));
