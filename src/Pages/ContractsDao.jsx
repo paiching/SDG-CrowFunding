@@ -10,7 +10,8 @@ const contractAddress = "0xF3116499767692201519949B8c20092419d12009";
 const TokenContractAddress = "0x86746fF42E7EC38A225d8C3005F7F2B7a18d137C";
 
 const ContractsDao = () => {
-  const { signer } = useAuth(); // 从全局上下文中访问签名者
+  const { signer, setSigner } = useAuth(); // 从全局上下文中访问签名者
+  const [provider, setProvider] = useState('');
   const [description, setDescription] = useState('');
   const [events, setEvents] = useState([]);
   const [name, setName] = useState('Loading...');
@@ -49,6 +50,7 @@ const ContractsDao = () => {
   useEffect(() => {
     const init = async () => {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
+      setProvider(provider);
         if (provider) {
            
             const signer = provider.getSigner();
@@ -84,6 +86,10 @@ const ContractsDao = () => {
       listenForEvents(contract);
     }
   }, [contract]);
+
+  useEffect(() => {
+    // 如果需要，在signer变化时执行的逻辑
+  }, [signer]);
 
   const fetchContractName = async (contractInstance) => {
     try {
@@ -225,6 +231,7 @@ const ContractsDao = () => {
   };
 
   const handleSubmit = async (e) => {
+    
     e.preventDefault();
     const descriptionJSON = JSON.stringify(formData);
     // Start processing
@@ -237,11 +244,12 @@ const ContractsDao = () => {
     setSubmissionStatus('Proposal submitted successfully!');
 
     // Reset the form if needed
-    setFormData({
-      proposalName: '',
-      proposalCategory: '',
-      proposalDetails: [{ detail: '' }]
-    });
+    // setFormData({
+    //   proposalName: '',
+    //   proposalCategory: '',
+    //   proposalDetails: [{ detail: '' }]
+    // });
+    setTab("events");
 
     }catch (error) {
       console.error("Error submitting proposal:", error);
@@ -251,20 +259,25 @@ const ContractsDao = () => {
     }
 
   };
-  
 
   const handlePropose = async (description) => {
+
+    const contractInstance = new ethers.Contract(contractAddress, contractABI, signer);
+    setContract(contractInstance);
+
     if (!isWalletConnected) {
       await handleConnectWallet();
     }
-    if (contract) {
+    if (contractInstance) {
       setIsSubmitting(true); // Start the submission process
       setSubmissionStatus('處理中...'); // Set the status message
       const targets = ["0xE9748e34c0705d67CdFaAAC2B3eE1031D6c146cF"];
       const values = [0];
       const calldatas = ["0x42"];
       try {
-        const transactionResponse = await contract.propose(targets, values, calldatas, description, {
+    
+  
+        const transactionResponse = await contractInstance.propose(targets, values, calldatas, description, {
           gasPrice: ethers.utils.parseUnits('5', 'gwei'),
           gasLimit: 1000000
         });
@@ -305,13 +318,14 @@ const ContractsDao = () => {
     const handleVote = async (proposalId, voteType) => {
 
       //這邊要檢查是否有votes
-      
+      const contractInstance = new ethers.Contract(contractAddress, contractABI, signer);
+      setContract(contractInstance);
 
       // You'll need to implement the voting logic here
       // This might involve interacting with a smart contract function
       console.log(`Voting on proposal ${proposalId} with vote type ${voteType}`);
       try {
-        const transactionResponse = await contract.castVote(proposalId, voteType, {
+        const transactionResponse = await contractInstance.castVote(proposalId, voteType, {
           gasPrice: ethers.utils.parseUnits('5', 'gwei'),
           gasLimit: 1000000
         });
@@ -394,7 +408,14 @@ const ContractsDao = () => {
                 className={styles.textarea}
               />
             </div>
-            <button type="submit" className={styles.submitButton}>提交提案</button>
+            <button 
+            className="mint-button" 
+            type="submit"
+            disabled={!signer} // Disable the button if the wallet is not connected
+          >
+            {signer ? '提交提案' : '連結錢包'} 
+          </button>
+            {/* <button type="submit" className={styles.submitButton}>提交提案</button> */}
             </fieldset>
           </form>
         </div>
@@ -454,11 +475,13 @@ const ContractsDao = () => {
               <div><p><span>贊成數</span>: {event.ProposalVotes.forVotes.toString()}</p></div>
               <div><p><span>棄票數</span>: {event.ProposalVotes.abstainVotes.toString()}</p></div>
               </div>
+              
               {event.proposalState === 1  &&!event.userHasVoted ? (
                 <div>
-                  <button onClick={() => handleVote(event.proposalIdDecimal, 0)}>反對</button>
-                  <button onClick={() => handleVote(event.proposalIdDecimal, 1)}>贊成</button>
-                  <button onClick={() => handleVote(event.proposalIdDecimal, 2)}>棄票</button>
+                  <button disabled={!signer} onClick={() => handleVote(event.proposalIdDecimal, 0)}>反對</button>
+                  <button disabled={!signer} onClick={() => handleVote(event.proposalIdDecimal, 1)}>贊成</button>
+                  <button disabled={!signer} onClick={() => handleVote(event.proposalIdDecimal, 2)}>棄票</button>
+                  <div> {signer ? ( <p></p> ) : ( <div> <p>請連結錢包...</p></div>)}</div>
                 </div>
               ) : event.proposalState === 1 && event.userHasVoted ? (
                 // Indicate that the user has already voted if the proposal is Active
