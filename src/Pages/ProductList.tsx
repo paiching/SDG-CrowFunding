@@ -16,7 +16,7 @@ interface Product {
   imageUrl: string; // 新增圖片URL屬性
 }
 
-const TokenContractAddress = "0x78EE555683Ac65e61C8830840e758a9622bc473C";
+const TokenContractAddress = "0x86746fF42E7EC38A225d8C3005F7F2B7a18d137C";
 // 初始產品列表
 const initialProducts: Product[] = [
   { id: 0, name: '消除貧窮(普通)', price: 0.0001, description: 'DAO權重 X 1', quantity: 0 ,imageUrl: '/icons/goal-1/GOAL_1_TARGETS/GOAL_1_TARGETS_PNG/GOAL_1_TARGET_1.1.png' },
@@ -97,19 +97,26 @@ const calculateTotal = () => {
 
     try {
 
-      const payableAmount = ethers.utils.parseUnits(totalAmount.toString(), "ether"); //change to hex
+      const payableAmount = ethers.utils.parseUnits(totalAmount.toString(), "ether");
       const ids = products.map(p => p.id);
       const quantities = products.map((product) => product.quantity);
-      console.log(payableAmount);
       const transactionResponse = await tokenContract.mintBatch(ids, quantities,{
-        value: payableAmount // This value needs to be passed as transaction options
+            value: payableAmount
       });
-      console.log(transactionResponse);
+
+      // Wait for the transaction to be confirmed
+      const receipt = await transactionResponse.wait();
+      console.log(receipt);
       //const txReceipt = await smartAccount.mintBatch(totalAmount, ids, quantities);
       //const tx = await smartAccount.mintBatch(payableAmount, ids, quantities, { value: payableAmount });
       //const txReceipt = await tx.wait();
-      alert('NFT鑄造成功');
-      console.log('Minted successfully: address'+ transactionResponse);
+      if (receipt && receipt.status === 1) {
+        alert('NFT鑄造成功');
+        console.log('Minted successfully: address'+ receipt.to);
+      }else {
+        alert('鑄造過程中發生錯誤');
+        console.error('The transaction was not successful:', receipt);
+    }
     } catch (error) {
       console.error('Error during minting:', error);
       alert('鑄造過程中發生錯誤');
