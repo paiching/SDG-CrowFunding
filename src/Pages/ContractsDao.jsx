@@ -5,6 +5,7 @@ import AcontractABI from '../hooks/contractAbi_Action.json';
 import NFTcontractABI from '../hooks/contractAbi_NFT.json';
 import styles from './Dao.scss'
 import { useAuth } from '../AuthContext';
+import { useLocation } from 'react-router-dom';
 
 const contractAddress = "0xF3116499767692201519949B8c20092419d12009";
 const TokenContractAddress = "0x86746fF42E7EC38A225d8C3005F7F2B7a18d137C";
@@ -47,7 +48,23 @@ const ContractsDao = () => {
   });
 
 
+  //處理參數類別
+  function useQuery() {
+    return new URLSearchParams(useLocation().search);
+  }
+
+  let query = useQuery();
+  const selectedCategoryFromQuery = query.get('category');
+
   useEffect(() => {
+    if (selectedCategoryFromQuery) {
+      setSelectedCategory(`${selectedCategoryFromQuery}`);
+    }
+  }, [selectedCategoryFromQuery]);
+
+  
+  useEffect(() => {
+    
     const init = async () => {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       setProvider(provider);
@@ -103,27 +120,27 @@ const ContractsDao = () => {
 
   useEffect(() => {
     console.log("Selected Category: ", selectedCategory); // Log the selected category
-    if (selectedCategory === 'all') {
-      setDisplayedEvents(events.slice(0, currentPage * pageSize));
-    } else {
-      const filteredEvents = events.filter((event) => {
-        let category;
-        try {
-          const descriptionObj = JSON.parse(event.description);
-          // Assuming proposalCategory is an index number, not the full string
-          category = `行動分類 ${descriptionObj.proposalCategory}`;
-        } catch (e) {
-          console.error('Error parsing description:', e);
-          category = 'Unknown';
+
+    const filterEvents = () => {
+        if (selectedCategory === 'all') {
+            return events;
+        } else {
+            return events.filter((event) => {
+                try {
+                    const descriptionObj = JSON.parse(event.description);
+                    // Make sure the comparison is done between values of the same type (both strings or both numbers)
+                    return `${descriptionObj.proposalCategory}` === selectedCategory;
+                } catch (e) {
+                    console.error('Error parsing description:', e);
+                    return false;
+                }
+            });
         }
-        // Now compare both as strings
-        return category === selectedCategory;
-      });
-      
-      console.log("Filtered Events: ", filteredEvents); // Log the filtered events
-      setDisplayedEvents(filteredEvents.slice(0, currentPage * pageSize));
-    }
-  }, [selectedCategory, events, currentPage]);
+    };
+
+    const filteredEvents = filterEvents();
+    setDisplayedEvents(filteredEvents.slice(0, currentPage * pageSize));
+}, [selectedCategory, events, currentPage]);
   
   
 
@@ -349,15 +366,30 @@ const ContractsDao = () => {
     };
     
 
+    const goals = [
+      { id: 1, title: '消除貧窮', imageUrl: '/icons/goal-1/GOAL_1_PRIMARY_ICON/GOAL_1_SVG/TheGlobalGoals_Icons_Color_Goal_1.svg', linkUrl: '/dao?category=1', count: '20'},
+      { id: 2, title: '消除飢餓', imageUrl: '/icons/goal-2/GOAL_2_PRIMARY_ICON/GOAL_2_SVG/TheGlobalGoals_Icons_Color_Goal_2.svg', linkUrl: '/dao?category=2', count: '20'},
+      { id: 3, title: '健康與福祉', imageUrl: '/icons/goal-3/GOAL_3_PRIMARY_ICON/GOAL_3_SVG/TheGlobalGoals_Icons_Color_Goal_3.svg', linkUrl: '/dao?category=3', count: '20'},
+      { id: 4, title: '教育品質', imageUrl: '/icons/goal-4/GOAL_4_PRIMARY_ICON/GOAL_4_SVG/TheGlobalGoals_Icons_Color_Goal_4.svg', linkUrl: '/dao?category=4', count: '20'},
+      { id: 5, title: '性別平等', imageUrl: '/icons/goal-5/GOAL_5_PRIMARY_ICON/GOAL_5_SVG/TheGlobalGoals_Icons_Color_Goal_5.svg', linkUrl: '/dao?category=5', count: '20'},
+      { id: 6, title: '淨水與衛生', imageUrl: '/icons/goal-6/GOAL_6_PRIMARY_ICON/GOAL_6_SVG/TheGlobalGoals_Icons_Color_Goal_6.svg', linkUrl: '/dao?category=6', count: '20'},
+      { id: 7, title: '可負擔能源', imageUrl: '/icons/goal-7/GOAL_7_PRIMARY_ICON/GOAL_7_SVG/TheGlobalGoals_Icons_Color_Goal_7.svg', linkUrl: '/dao?category=7', count: '20'},
+      { id: 8, title: '就業與經濟成長', imageUrl: '/icons/goal-8/GOAL_8_PRIMARY_ICON/GOAL_8_SVG/TheGlobalGoals_Icons_Color_Goal_8.svg', linkUrl: '/dao?category=8', count: '20'},
+      { id: 9, title: '工業創新基礎建設', imageUrl: '/icons/goal-9/GOAL_9_PRIMARY_ICON/GOAL_9_SVG/TheGlobalGoals_Icons_Color_Goal_9.svg', linkUrl: '/dao?category=9', count: '20'},
+      { id: 10, title: '減少不平等', imageUrl: '/icons/goal-10/GOAL_10_PRIMARY_ICON/GOAL_10_SVG/TheGlobalGoals_Icons_Color_Goal_10.svg', linkUrl: '/dao?category=10', count: '20'},
+      { id: 11, title: '永續城市', imageUrl: '/icons/goal-11/GOAL_11_PRIMARY_ICON/GOAL_11_SVG/TheGlobalGoals_Icons_Color_Goal_11.svg', linkUrl: '/dao?category=11', count: '20'},
+      { id: 12, title: '責任消費與生產', imageUrl: '/icons/goal-12/GOAL_12_PRIMARY_ICON/GOAL_12_SVG/TheGlobalGoals_Icons_Color_Goal_12.svg', linkUrl: '/dao?category=12', count: '20'},
+      { id: 13, title: '氣候行動', imageUrl: '/icons/goal-13/GOAL_13_PRIMARY_ICON/GOAL_13_SVG/TheGlobalGoals_Icons_Color_Goal_13.svg', linkUrl: '/dao?category=13', count: '20'},
+      { id: 14, title: '海洋生態', imageUrl: '/icons/goal-14/GOAL_14_PRIMARY_ICON/GOAL_14_SVG/TheGlobalGoals_Icons_Color_Goal_14.svg', linkUrl: '/dao?category=14', count: '20'},
+      { id: 15, title: '陸地生態', imageUrl: '/icons/goal-15/GOAL_15_PRIMARY_ICON/GOAL_15_SVG/TheGlobalGoals_Icons_Color_Goal_15.svg', linkUrl: '/dao?category=15', count: '20'},
+      { id: 16, title: '和平與正義制度', imageUrl: '/icons/goal-16/GOAL_16_PRIMARY_ICON/GOAL_16_SVG/TheGlobalGoals_Icons_Color_Goal_16.svg', linkUrl: '/dao?category=16', count: '20'},
+      { id: 17, title: '全球夥伴', imageUrl: '/icons/goal-17/GOAL_17_PRIMARY_ICON/GOAL_17_SVG/TheGlobalGoals_Icons_Color_Goal_17.svg', linkUrl: '/dao?category=17', count: '20'}
+      // ... (populate this array with real goal data)
+    ];
+
   return (
     <div className='proposalContainer'>
-              <select onChange={handleCategoryChange} value={selectedCategory} className={styles.select}>
-                <option value="all">全部類別</option>
-                {/* Map over some predefined categories or dynamically create this list */}
-                {[...Array(17)].map((_, index) => (
-                  <option key={index} value={`行動分類 ${index + 1}`}>{`行動分類 ${index + 1}`}</option>
-                ))}
-              </select>      
+   
       {/* Display submission status */}
     {isSubmitting && <div className="submission-status">{submissionStatus}</div>}
       <dv className='tabButtons'>
@@ -392,9 +424,9 @@ const ContractsDao = () => {
                 className={styles.select}
               >
                 <option value="">請選擇類別</option>
-                {[...Array(17)].map((_, index) => (
-                  <option key={index} value={index + 1}>{`行動分類 ${index + 1}`}</option>
-                ))}
+                {goals.map((goal) => (
+        <option key={goal.id} value={goal.id}>{goal.title}</option>
+      ))}
               </select>
             </div>
       
@@ -425,7 +457,13 @@ const ContractsDao = () => {
     {tab === 'events' && (
       
       <div className="displayContainer">
-        
+                     <select onChange={handleCategoryChange} value={selectedCategory} className={styles.select}>
+                <option value="all">全部類別</option>
+                {/* Map over some predefined categories or dynamically create this list */}
+      {goals.map((goal) => (
+        <option key={goal.id} value={goal.id}>{goal.title}</option>
+      ))}
+              </select>    
       {displayedEvents.length > 0 ? (
         displayedEvents.map((event, index) => {
           // Assuming event.proposalIdDecimal is the decimal representation of the proposal ID
@@ -493,11 +531,11 @@ const ContractsDao = () => {
         })
       ) : (
         <div>
-        {signer ? (
+        {displayedEvents.length>0 ? (
           <p>讀取中...</p>
         ) : (
           <div className="pageHight">
-          <p>請連結錢包...</p>
+          <p>無提案...</p>
           </div>
         )}
       </div>
