@@ -15,9 +15,8 @@ export default function Header() {
   };
 
   const handleConnectWallet = async () => {
-    console.log("sssd");
+    
     if (window.ethereum) {
-      console.log("get signer");
       try {
         await window.ethereum.request({ method: 'eth_requestAccounts' });
         const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -27,7 +26,7 @@ export default function Header() {
         setSigner(signer); // 使用新的签名者更新全局状态
         console.log(signer);
       } catch (error) {
-        console.error("连接钱包时出错:", error);
+        console.error("連接錢包出錯:", error);
       }
     } else {
       console.error('未安装MetaMask');
@@ -36,7 +35,7 @@ export default function Header() {
 
   const handleDisconnectWallet = () => {
     // Simple confirmation dialog to confirm wallet disconnection
-    const willDisconnect = window.confirm("Are you sure you want to disconnect your wallet?");
+    const willDisconnect = window.confirm("斷開錢包連結?");
     if (willDisconnect) {
       // Reset the context state
       setUserAddress('');
@@ -53,7 +52,7 @@ export default function Header() {
     <div className={styles.header}>
       <div className={styles.nav}>
         <Link to="/">
-          <div className={styles.logo}>SDG 募資平台</div>
+          <div className={styles.logo}>SDGs DAO</div>
         </Link>
          <div className={`${styles.menuItem} ${isMenuOpen ? styles.menuOpen : ''}`}>
           {/* <Link to="/explore">
@@ -74,7 +73,7 @@ export default function Header() {
           <Link to="/products">
             <div className={styles.link}>NFT</div>
           </Link>
-          <Link to="/contracts">
+          <Link to="/about">
             <div className={styles.link}>關於</div>
           </Link>
         </div>

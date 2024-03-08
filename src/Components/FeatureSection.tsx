@@ -123,11 +123,11 @@ export default function FeatureSection() {
   return (
     <section className={styles.featureSection} style={{ backgroundImage: `url(${images[activeIndex]})` }}>
       <div className={`${styles.content} ${styles.semiTransparentOverlay}`}>
-        <h1 className={styles.contentTitle }>SDG 募資行動計畫</h1>
+        <h1 className={styles.contentTitle }>SDGs 永續行動計畫</h1>
         <div className='flex'>
           <div className={styles.minted}>
              
-              <span className={styles.bolderGreen}>{caseNumber}</span> 件提案計畫進行中
+              <span className={styles.bolderGreen}>{caseNumber}</span> 件提案計畫
               <span className={styles.bolder}> |
               {/* </span> 已完成 <span className={styles.bolderBlue}>15</span> 件目標 <span className={styles.bolder}>| */}
               </span> 已募資 <span className={styles.bolderOrange}>{treasury}</span> <span className={styles.bolder}>ETH

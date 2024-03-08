@@ -12,6 +12,7 @@ import ProductList from './Pages/ProductList.tsx';
 import { AuthProvider } from './AuthContext';
 import Dao from './Pages/Dao.jsx';
 import ContractsDao from './Pages/ContractsDao.jsx';
+import About from './Pages/about.jsx'
 
 const App = ()=>{
 
@@ -30,7 +31,7 @@ const App = ()=>{
       <Route path="/items" element={<ItemsPage />} />
       <Route path="/products" element={<ProductList />} />
       <Route path="/dao" element={<ContractsDao />} />
-     
+      <Route path="/about" element={<About />} />
         {/* <Route path="/" element={<HomePage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} /> */}
