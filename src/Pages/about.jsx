@@ -3,7 +3,8 @@ import styles from './about.scss';
 
 function about() {
   return (
-    <div className={styles.aboutContainer}>
+    <div className='aboutContainer'>  
+    <div >
       {/* <h1>SDGs DAO</h1> */}
       <h2>1. 前言</h2>
       <p>隨著全球面臨日益嚴峻的環境和社會挑戰，聯合國可持續發展目標（SDGs）提供了一個共同的藍圖，旨在促進和平與繁榮，保護地球。近年來，區塊鏈技術和非同質化代幣（NFT）為實現這些目標提供了新的可能性。本報告提出一個創新的NFT眾籌平台，透過集合社群力量和技術創新，支持與SDGs目標下的項目和創意。</p>
@@ -34,6 +35,7 @@ function about() {
         <li>ChaoJen 智能合約撰寫</li>
         <li>Henry 前端與智能合約交互</li>
       </ul>
+    </div>
     </div>
   );
 }

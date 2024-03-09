@@ -130,7 +130,7 @@ export default function FeatureSection() {
               <span className={styles.bolderGreen}>{caseNumber}</span> 件提案計畫
               <span className={styles.bolder}> |
               {/* </span> 已完成 <span className={styles.bolderBlue}>15</span> 件目標 <span className={styles.bolder}>| */}
-              </span> 已募資 <span className={styles.bolderOrange}>{treasury}</span> <span className={styles.bolder}>ETH
+              </span> 資金庫 <span className={styles.bolderOrange}>{treasury}</span> <span className={styles.bolder}>ETH
               </span>
            
           </div>

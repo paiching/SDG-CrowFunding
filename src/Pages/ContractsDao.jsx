@@ -302,12 +302,12 @@ const ContractsDao = () => {
         // Wait for one confirmation to ensure the event is emitted
         await transactionResponse.wait(1);
         // Update the status message
-        setSubmissionStatus('提案發佈成功!');
+        setSubmissionStatus('提案發佈完成!');
         setIsSubmitting(false); // End the submission process
         setDescription('');
         // Fetch and display new events
         await listenForEvents(contract);
-        alert('提案發佈成功');
+        alert('提案發佈完成');
 
       } catch (error) {
         console.error("Error submitting proposal:", error);
@@ -334,6 +334,9 @@ const ContractsDao = () => {
 
     const handleVote = async (proposalId, voteType) => {
 
+      setIsSubmitting(true); // Start the submission process
+      setSubmissionStatus('處理中...'); // Set the status message
+
       //這邊要檢查是否有votes
       const contractInstance = new ethers.Contract(contractAddress, contractABI, signer);
       setContract(contractInstance);
@@ -343,20 +346,22 @@ const ContractsDao = () => {
       console.log(`Voting on proposal ${proposalId} with vote type ${voteType}`);
       try {
         const transactionResponse = await contractInstance.castVote(proposalId, voteType, {
-          gasPrice: ethers.utils.parseUnits('5', 'gwei'),
+          gasPrice: ethers.utils.parseUnits('10', 'gwei'),
           gasLimit: 1000000
         });
 
         console.log(transactionResponse);
         // Wait for one confirmation to ensure the event is emitted
         await transactionResponse.wait(1);
+
+        setIsSubmitting(false); // End the submission process
         // Update the status message
-        setSubmissionStatus('投票成功!');
-        alert('提案發佈成功');
+        setSubmissionStatus('投票完成!');
+        alert('投票完成');
 
       } catch (error) {
         console.error("Error submitting proposal:", error);
-        setSubmissionStatus('提案發佈失敗');
+        setSubmissionStatus('投票發佈失敗');
         setIsSubmitting(false); // End the submission process
       }
     };
