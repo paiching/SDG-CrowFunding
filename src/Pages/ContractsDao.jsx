@@ -28,6 +28,7 @@ const ContractsDao = () => {
   const [sortedEvents, setSortedEvents] = useState([]);
   const [ userAddress,setUserAddress] = useState();
   const [ userVoteRight,setUserVoteRight] = useState();
+  const [ userHasVoted, setUserHasVoted ] = useState();
   //load more
   const [displayedEvents, setDisplayedEvents] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
@@ -176,17 +177,28 @@ const ContractsDao = () => {
 
         const ProposalVotes = await contractInstance.proposalVotes(proposalIdDecimal);
 
+        //檢查是否投過票
+        if(signer){
+        const address = await signer.getAddress();
+        setIsWalletConnected(true);
+        setUserAddress(address);
+        console.log("signer address:", address);
+        const userHasVoted = await contractInstance.hasVoted(proposalIdDecimal, userAddress);
+        }
+        
         //const userHasVoted = await contractInstance.hasVoted(proposalIdDecimal, userAddress);
         //const userHasVoted = await checkIfUserHasVoted(contractInstance, proposalIdDecimal, userAddress);
         
        // const userHasVoted = await contractInstance.(contractInstance, proposalIdDecimal, userAddress);
 
         // 返回处理后的事件对象，包括提案状态
+        // userHasVoted = 0;
+        // setUserHasVoted(userHasVoted);
         return {
           ...event.args,
           proposalIdDecimal,
           proposalState,
-          //userHasVoted,
+          userHasVoted,
           ProposalVotes
         };
       }));
@@ -222,6 +234,7 @@ const ContractsDao = () => {
         setContract(contractInstance);
         fetchContractName(contractInstance);
         listenForEvents(contractInstance);
+
       } catch (error) {
         console.error("Error connecting to wallet:", error);
       }
@@ -358,6 +371,16 @@ const ContractsDao = () => {
         // Update the status message
         setSubmissionStatus('投票完成!');
         alert('投票完成');
+
+        //diable button
+        const updatedEvents = events.map(event => {
+          if (event.proposalIdDecimal === proposalId) {
+            return { ...event, userHasVoted: true };
+          }
+          return event;
+        });
+
+        setEvents(updatedEvents); // Update your events state
 
       } catch (error) {
         console.error("Error submitting proposal:", error);
@@ -521,9 +544,9 @@ const ContractsDao = () => {
               
               {event.proposalState === 1  &&!event.userHasVoted ? (
                 <div>
-                  <button disabled={!signer} onClick={() => handleVote(event.proposalIdDecimal, 0)}>反對</button>
-                  <button disabled={!signer} onClick={() => handleVote(event.proposalIdDecimal, 1)}>贊成</button>
-                  <button disabled={!signer} onClick={() => handleVote(event.proposalIdDecimal, 2)}>棄票</button>
+                  <button disabled={event.userHasVoted || !signer} onClick={() => handleVote(event.proposalIdDecimal, 0)}>反對</button>
+                  <button disabled={event.userHasVoted || !signer} onClick={() => handleVote(event.proposalIdDecimal, 1)}>贊成</button>
+                  <button disabled={event.userHasVoted || !signer} onClick={() => handleVote(event.proposalIdDecimal, 2)}>棄票</button>
                   <div> {signer ? ( <p></p> ) : ( <div> <p>請連結錢包...</p></div>)}</div>
                 </div>
               ) : event.proposalState === 1 && event.userHasVoted ? (
