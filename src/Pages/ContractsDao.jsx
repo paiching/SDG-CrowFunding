@@ -106,8 +106,10 @@ const ContractsDao = () => {
   }, [contract]);
 
   useEffect(() => {
-    // 如果需要，在signer变化时执行的逻辑
-  }, [signer]);
+    if (signer) {
+        signer.getAddress().then(setUserAddress).catch(console.error);
+    }
+}, [signer]);
 
   const fetchContractName = async (contractInstance) => {
     try {
@@ -177,15 +179,8 @@ const ContractsDao = () => {
 
         const ProposalVotes = await contractInstance.proposalVotes(proposalIdDecimal);
 
-        //檢查是否投過票
-        if(signer){
-        const address = await signer.getAddress();
-        setIsWalletConnected(true);
-        setUserAddress(address);
-        console.log("signer address:", address);
-        const userHasVoted = await contractInstance.hasVoted(proposalIdDecimal, userAddress);
-        }
-        
+
+
         //const userHasVoted = await contractInstance.hasVoted(proposalIdDecimal, userAddress);
         //const userHasVoted = await checkIfUserHasVoted(contractInstance, proposalIdDecimal, userAddress);
         
@@ -202,6 +197,17 @@ const ContractsDao = () => {
           ProposalVotes
         };
       }));
+
+
+              //檢查是否投過票
+            //   if (signer) {
+            //     const updatedEventsWithVotingStatus = await Promise.all(processedEvents.map(async (event) => {
+            //         const hasVoted = await contractInstance.hasVoted(event.proposalIdDecimal, userAddress);
+            //         return { ...event, userHasVoted: hasVoted };
+            //     }));
+            
+            //     setEvents(updatedEventsWithVotingStatus);
+            // }
   
       console.log(processedEvents);
       const reversedEvents = processedEvents.reverse(); // Reverse the full list of events for display
