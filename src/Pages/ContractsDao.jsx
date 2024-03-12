@@ -6,6 +6,9 @@ import NFTcontractABI from '../hooks/contractAbi_NFT.json';
 import styles from './Dao.scss'
 import { useAuth } from '../AuthContext';
 import { useLocation } from 'react-router-dom';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css'; // import styles
+
 
 const contractAddress = "0xF3116499767692201519949B8c20092419d12009";
 const TokenContractAddress = "0x86746fF42E7EC38A225d8C3005F7F2B7a18d137C";
@@ -35,6 +38,8 @@ const ContractsDao = () => {
   const pageSize = 10; // You can set this to however many events you want per page
 
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [imageData, setImageData] = useState(null);
+
 
 
   //tabs
@@ -63,67 +68,56 @@ const ContractsDao = () => {
     }
   }, [selectedCategoryFromQuery]);
 
-  
+
+
+  //初始
   useEffect(() => {
-    
     const init = async () => {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       setProvider(provider);
-        if (provider) {
-           
-            const signer = provider.getSigner();
-            // const address = await signer.getAddress();
-            // setIsWalletConnected(true);
-            // setUserAddress(address);
-            // console.log("signer address:", address);
-            
-            const contractInstance = new ethers.Contract(contractAddress, contractABI, provider);
-            setContract(contractInstance);
+      const contractInstance = new ethers.Contract(contractAddress, contractABI, provider);
+      setContract(contractInstance);
+      await listenForEvents(contractInstance); // Call without a user address
+    };
+  
+    init();
+  }, []);
 
-            const TokenInstance = new ethers.Contract(TokenContractAddress, NFTcontractABI, provider);
-            // const votes = await TokenInstance.getVotes(address);
-            // setUserVoteRight(votes);
-            // console.log("vote right"+votes);
-
-            // Now that the contract is set, fetch events or listen for events
-            //await listenForEvents(contractInstance); // Make sure this is awaited
-            //setEvents(Initevents);
-        } else {
-          setIsWalletConnected(false);
-          setEvents([]); // Clear the events
-          setDisplayedEvents([]); // Clear the displayed events
-        }
+  // signer變化時更新events
+  useEffect(() => {
+    const updateSignerAndListenForEvents = async () => {
+      if (signer) {
+        const address = await signer.getAddress();
+        setUserAddress(address);
+        setIsWalletConnected(true);
+        const signerContractInstance = new ethers.Contract(contractAddress, contractABI, signer);
+        setContract(signerContractInstance);
+        await listenForEvents(signerContractInstance, address); // Call with a user address
+      }
     };
 
-    init();
-}, []);
+    updateSignerAndListenForEvents();
+  }, [signer]);
 
-
+  //當獲取到用戶地址重新獲取投票狀態
   useEffect(() => {
-    if (contract) {
-      listenForEvents(contract);
-    }
-  }, [contract]);
+    const checkVotingStatus = async () => {
+      if (contract && userAddress) {
+        const updatedEventsWithVotingStatus = await Promise.all(events.map(async (event) => {
+          const hasVoted = await contract.hasVoted(event.proposalIdDecimal, userAddress);
+          return { ...event, userHasVoted: hasVoted };
+        }));
+        setEvents(updatedEventsWithVotingStatus);
+      }
+    };
+  
+    checkVotingStatus();
+  }, [userAddress, contract]);
+  
 
+  //當類型變更時
   useEffect(() => {
-    if (signer) {
-        signer.getAddress().then(setUserAddress).catch(console.error);
-    }
-}, [signer]);
-
-  const fetchContractName = async (contractInstance) => {
-    try {
-      const fetchedName = await contractInstance.name();
-      setName(fetchedName);
-    } catch (error) {
-      console.error("Error fetching contract name:", error);
-      setName('Error fetching contract name');
-    }
-  };
-
-  useEffect(() => {
-    console.log("Selected Category: ", selectedCategory); // Log the selected category
-
+    //console.log("Selected Category: ", selectedCategory); // Log the selected category
     const filterEvents = () => {
         if (selectedCategory === 'all') {
             return events;
@@ -151,16 +145,8 @@ const ContractsDao = () => {
     setSelectedCategory(e.target.value);
   };
 
-  const getProposalVotes = async (contractInstance,proposalId) => {
-    try {
-      const ProposalVotes = await contractInstance.proposalVotes(proposalId);
-      setProposalVotes(ProposalVotes);
-    } catch (error) {
-      console.error("Error fetching contract name:", error);
-    }
-  };
 
-  const listenForEvents = async (contractInstance) => {
+  const listenForEvents = async (contractInstance, userAddr = null) => {
     try {
       const eventName = "ProposalCreated";
       const fromBlock = 0;
@@ -177,18 +163,20 @@ const ContractsDao = () => {
         // 使用await来等待异步查询状态
         const proposalState = await contractInstance.state(proposalIdDecimal);
 
-        const ProposalVotes = await contractInstance.proposalVotes(proposalIdDecimal);
+        let userHasVoted = false;
+        let ProposalVotes = { againstVotes: '0', forVotes: '0', abstainVotes: '0' };
 
+        if (userAddr) {
+          userHasVoted = await contractInstance.hasVoted(proposalIdDecimal, userAddr);
+          ProposalVotes = await contractInstance.proposalVotes(proposalIdDecimal);
+        }
 
-
-        //const userHasVoted = await contractInstance.hasVoted(proposalIdDecimal, userAddress);
-        //const userHasVoted = await checkIfUserHasVoted(contractInstance, proposalIdDecimal, userAddress);
+        // Make sure ProposalVotes has the expected structure or provide defaults
+        if (!ProposalVotes || typeof ProposalVotes !== 'object') {
+          ProposalVotes = { againstVotes: '0', forVotes: '0', abstainVotes: '0' };
+        }
         
-       // const userHasVoted = await contractInstance.(contractInstance, proposalIdDecimal, userAddress);
-
-        // 返回处理后的事件对象，包括提案状态
-        // userHasVoted = 0;
-        // setUserHasVoted(userHasVoted);
+       
         return {
           ...event.args,
           proposalIdDecimal,
@@ -198,17 +186,6 @@ const ContractsDao = () => {
         };
       }));
 
-
-              //檢查是否投過票
-            //   if (signer) {
-            //     const updatedEventsWithVotingStatus = await Promise.all(processedEvents.map(async (event) => {
-            //         const hasVoted = await contractInstance.hasVoted(event.proposalIdDecimal, userAddress);
-            //         return { ...event, userHasVoted: hasVoted };
-            //     }));
-            
-            //     setEvents(updatedEventsWithVotingStatus);
-            // }
-  
       console.log(processedEvents);
       const reversedEvents = processedEvents.reverse(); // Reverse the full list of events for display
       setEvents(reversedEvents); // Set the full list of events in reversed order
@@ -229,26 +206,6 @@ const ContractsDao = () => {
   };
   
 
-  const handleConnectWallet = async () => {
-    if (window.ethereum) {
-      try {
-        await window.ethereum.request({ method: 'eth_requestAccounts' });
-        setIsWalletConnected(true);
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = provider.getSigner();
-        const contractInstance = new ethers.Contract(contractAddress, contractABI, signer);
-        setContract(contractInstance);
-        fetchContractName(contractInstance);
-        listenForEvents(contractInstance);
-
-      } catch (error) {
-        console.error("Error connecting to wallet:", error);
-      }
-    } else {
-      console.error('MetaMask is not installed');
-    }
-  };
-
   //tabs
 
   const handleInputChange = (e) => {
@@ -257,15 +214,6 @@ const ContractsDao = () => {
   };
   
   
-  const addProposalDetailInput = () => {
-    setFormData({ ...formData, proposalDetails: [...formData.proposalDetails, { detail: '' }] });
-  };
-
-  
-  const handleDescriptionChange = (event) => {
-    setDescription(event.target.value);
-  };
-
   const handleSubmit = async (e) => {
     
     e.preventDefault();
@@ -278,13 +226,6 @@ const ContractsDao = () => {
     await handlePropose(descriptionJSON);
 
     setSubmissionStatus('Proposal submitted successfully!');
-
-    // Reset the form if needed
-    // setFormData({
-    //   proposalName: '',
-    //   proposalCategory: '',
-    //   proposalDetails: [{ detail: '' }]
-    // });
     setTab("events");
 
     }catch (error) {
@@ -301,9 +242,6 @@ const ContractsDao = () => {
     const contractInstance = new ethers.Contract(contractAddress, contractABI, signer);
     setContract(contractInstance);
 
-    if (!isWalletConnected) {
-      await handleConnectWallet();
-    }
     if (contractInstance) {
       setIsSubmitting(true); // Start the submission process
       setSubmissionStatus('處理中...'); // Set the status message
@@ -387,6 +325,8 @@ const ContractsDao = () => {
         });
 
         setEvents(updatedEvents); // Update your events state
+        setSubmissionStatus('Vote successful!');
+        setIsSubmitting(false);
 
       } catch (error) {
         console.error("Error submitting proposal:", error);
@@ -466,14 +406,14 @@ const ContractsDao = () => {
       
             <div className={styles.formGroup}>
               <label htmlFor="proposalDetail" className={styles.label}>提案內容</label>
-              <textarea
-                id="proposalDetail"
-                name="proposalDetail"
+              <ReactQuill
                 value={formData.proposalDetail}
-                onChange={handleInputChange}
-                className={styles.textarea}
+                onChange={(content) => setFormData({ ...formData, proposalDetail: content })}
+                readOnly={isSubmitting}
+                theme="snow"
               />
             </div>
+
             <button 
             className="mint-button" 
             type="submit"
@@ -503,6 +443,10 @@ const ContractsDao = () => {
           // Assuming event.proposalIdDecimal is the decimal representation of the proposal ID
           // And event.proposalState is the number representing the state
           const proposalStateString = getProposalStateString(event.proposalState);
+           // Access ProposalVotes safely by checking if it exists
+          const againstVotes = event.ProposalVotes?.againstVotes.toString() ?? '0';
+          const forVotes = event.ProposalVotes?.forVotes.toString() ?? '0';
+          const abstainVotes = event.ProposalVotes?.abstainVotes.toString() ?? '0';
 
           let proposalName, proposalCategory, proposalDetail;
           try {
@@ -543,19 +487,19 @@ const ContractsDao = () => {
               <p>State: {proposalStateString}</p> {/* Display the state string */}
               {/* Display the ProposalVotes counts */}
               <div className="vote-flex">
-              <div><p><span>反對數</span>: {event.ProposalVotes.againstVotes.toString()}</p></div>
-              <div><p><span>贊成數</span>: {event.ProposalVotes.forVotes.toString()}</p></div>
-              <div><p><span>棄票數</span>: {event.ProposalVotes.abstainVotes.toString()}</p></div>
+              <div><p><span>反對數</span>: {againstVotes}</p></div>
+              <div><p><span>贊成數</span>: {forVotes}</p></div>
+              <div><p><span>棄票數</span>: {abstainVotes}</p></div>
               </div>
               
-              {event.proposalState === 1  &&!event.userHasVoted ? (
+              {!event.userHasVoted ? (
                 <div>
                   <button disabled={event.userHasVoted || !signer} onClick={() => handleVote(event.proposalIdDecimal, 0)}>反對</button>
                   <button disabled={event.userHasVoted || !signer} onClick={() => handleVote(event.proposalIdDecimal, 1)}>贊成</button>
                   <button disabled={event.userHasVoted || !signer} onClick={() => handleVote(event.proposalIdDecimal, 2)}>棄票</button>
-                  <div> {signer ? ( <p></p> ) : ( <div> <p>請連結錢包...</p></div>)}</div>
+                  <div> {signer ? null : ( <div> <p>請連結錢包...</p></div>)}</div>
                 </div>
-              ) : event.proposalState === 1 && event.userHasVoted ? (
+              ) : event.userHasVoted ? (
                 // Indicate that the user has already voted if the proposal is Active
                 <p>您已經投過票</p>
               ) : null}
