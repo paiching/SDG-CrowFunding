@@ -8,7 +8,7 @@ import { useAuth } from '../AuthContext';
 import { useLocation } from 'react-router-dom';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css'; // import styles
-
+import DOMPurify from 'dompurify';
 
 const contractAddress = "0xF3116499767692201519949B8c20092419d12009";
 const TokenContractAddress = "0x86746fF42E7EC38A225d8C3005F7F2B7a18d137C";
@@ -41,6 +41,8 @@ const ContractsDao = () => {
   const [imageData, setImageData] = useState(null);
 
 
+  const [detailsShown, setDetailsShown] = useState({});
+
 
   //tabs
   const [tab, setTab] = useState('events'); // 'form' or 'events'
@@ -53,6 +55,17 @@ const ContractsDao = () => {
     proposalDetails: [{ detail: '' }]
   });
 
+
+  const toggleDetails = (id) => {
+    setDetailsShown((prevDetailsShown) => ({
+      ...prevDetailsShown,
+      [id]: !prevDetailsShown[id]
+    }));
+  };
+
+  const cleanHTML = (dirtyHtml) => {
+    return { __html: DOMPurify.sanitize(dirtyHtml) };
+  };
 
   //處理參數類別
   function useQuery() {
@@ -452,6 +465,9 @@ const ContractsDao = () => {
           try {
             // Parse the description from the JSON string
             const descriptionObj = JSON.parse(event.description);
+            const cleanHTML = DOMPurify.sanitize(event.description);
+           
+
             // Extract the values for display
             proposalName = descriptionObj.proposalName;
             proposalCategory = descriptionObj.proposalCategory;
@@ -473,26 +489,24 @@ const ContractsDao = () => {
           return (
 
             
-            <div className="">
+          <div className="">
 
 
-            <div key={index} className="event-card">
-              <p>ID: {event.proposalIdDecimal}</p>
-              {/* <p>Proposer: {event.proposer}</p> */}
-              {/* ... other event details ... */}
-              <p>標題: {proposalName}</p>
-              <p>類型: {proposalCategory}</p>
-              <p>內容: {proposalDetail}</p>
-              
-              <p>State: {proposalStateString}</p> {/* Display the state string */}
-              {/* Display the ProposalVotes counts */}
-              <div className="vote-flex">
-              <div><p><span>反對數</span>: {againstVotes}</p></div>
-              <div><p><span>贊成數</span>: {forVotes}</p></div>
-              <div><p><span>棄票數</span>: {abstainVotes}</p></div>
-              </div>
-              
-              {!event.userHasVoted ? (
+          <div key={index} className="event-card">
+            <div className="proposal-feature">
+    <img src={goals[0].imageUrl} className="proposal-image" alt="Goal" />
+    <div className='feature-content'>
+      <div className="vote-flex">
+        <p><span>反對數</span>: {againstVotes}</p>
+        <p><span>贊成數</span>: {forVotes}</p>
+        <p><span>棄票數</span>: {abstainVotes}</p>
+      </div>
+      <div className='feature-desc'>
+        <p><span>ID</span>: {event.proposalIdDecimal}</p>
+        <p><span>標題</span>: {proposalName}</p>
+        <p><span>類型</span>: {proposalCategory}</p>
+        <p><span>狀態</span>: {proposalStateString}</p>
+        { event.proposalState === 1 && !event.userHasVoted ?  (
                 <div>
                   <button disabled={event.userHasVoted || !signer} onClick={() => handleVote(event.proposalIdDecimal, 0)}>反對</button>
                   <button disabled={event.userHasVoted || !signer} onClick={() => handleVote(event.proposalIdDecimal, 1)}>贊成</button>
@@ -503,8 +517,22 @@ const ContractsDao = () => {
                 // Indicate that the user has already voted if the proposal is Active
                 <p>您已經投過票</p>
               ) : null}
-            </div>
-                    </div>
+      </div>
+    </div> 
+
+  </div>
+        {/* Conditionally render proposalDetail */}
+      {detailsShown[event.proposalIdDecimal] && (
+        <div dangerouslySetInnerHTML={cleanHTML(proposalDetail)} />
+      )}
+
+      {/* Read More / Collapse Button */}
+      <button onClick={() => toggleDetails(event.proposalIdDecimal)} className="read-more-button">
+        {detailsShown[event.proposalIdDecimal] ? '收起' : '提案詳情'}
+      </button>
+             
+            </div>{/* end of event-card */}
+      </div>
           );
         })
       ) : (
