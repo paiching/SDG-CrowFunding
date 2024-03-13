@@ -9,7 +9,9 @@ import { useLocation } from 'react-router-dom';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css'; // import styles
 import DOMPurify from 'dompurify';
+import { create } from 'ipfs-http-client';
 
+const ipfsClient = create({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' });
 const contractAddress = "0xF3116499767692201519949B8c20092419d12009";
 const TokenContractAddress = "0x86746fF42E7EC38A225d8C3005F7F2B7a18d137C";
 
@@ -38,8 +40,9 @@ const ContractsDao = () => {
   const pageSize = 10; // You can set this to however many events you want per page
 
   const [selectedCategory, setSelectedCategory] = useState('all');
+  
   const [imageData, setImageData] = useState(null);
-
+  const [imageHash, setImageHash] = useState(''); // 存储上传到IPFS的图片哈希
 
   const [detailsShown, setDetailsShown] = useState({});
 
@@ -219,8 +222,7 @@ const ContractsDao = () => {
   };
   
 
-  //tabs
-
+  //這邊會偵測一有變更就會添加到表單資料
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -230,7 +232,13 @@ const ContractsDao = () => {
   const handleSubmit = async (e) => {
     
     e.preventDefault();
-    const descriptionJSON = JSON.stringify(formData);
+
+    const proposalData = {
+      ...formData,
+      image: imageData
+    };
+
+    const descriptionJSON = JSON.stringify(proposalData);
     // Start processing
     setIsSubmitting(true);
     setSubmissionStatus('Processing...');
@@ -351,6 +359,31 @@ const ContractsDao = () => {
     const switchTab = (selectedTab) => {
       setTab(selectedTab);
     };
+
+    const handleImageChange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImageData(reader.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    // 处理图片文件上传
+  const handleImageUpload = async (e) => {
+    try {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const result = await ipfsClient.add(file); // 上传文件到IPFS
+      setImageHash(result.path); // 保存IPFS哈希到状态
+    } catch (error) {
+      console.error('Error uploading file to IPFS:', error);
+    }
+  };
+    
     
 
     const goals = [
@@ -389,6 +422,14 @@ const ContractsDao = () => {
         <div className={styles.wrapper}>
           <form onSubmit={handleSubmit} className={styles.formContainer}>
             {/* Disable the form elements based on isSubmitting state */}
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              disabled={isSubmitting}
+            />
+
           <fieldset disabled={isSubmitting}>
             <div className={styles.formGroup}>
               <label htmlFor="proposalName" className={styles.label}>提案名稱</label>
@@ -494,7 +535,8 @@ const ContractsDao = () => {
 
           <div key={index} className="event-card">
             <div className="proposal-feature">
-    <img src={goals[0].imageUrl} className="proposal-image" alt="Goal" />
+    {/* <img src={goals[0].imageUrl} className="proposal-image" alt="Goal" /> */}
+    <img src={event.image} className="proposal-image" alt="Goal" />
     <div className='feature-content'>
       <div className="vote-flex">
         <p><span>反對數</span>: {againstVotes}</p>
