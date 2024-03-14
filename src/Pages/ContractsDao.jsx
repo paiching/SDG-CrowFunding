@@ -14,6 +14,7 @@ import { create } from 'ipfs-http-client';
 const ipfsClient = create({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' });
 const contractAddress = "0xF3116499767692201519949B8c20092419d12009";
 const TokenContractAddress = "0x86746fF42E7EC38A225d8C3005F7F2B7a18d137C";
+const actionContractAddress = "0x9cAE0C0148E6d51d000aefE2A07f1d32c5886fCc"; // Action contract address
 
 const ContractsDao = () => {
   const { signer, setSigner } = useAuth(); // 从全局上下文中访问签名者
@@ -45,6 +46,8 @@ const ContractsDao = () => {
   const [imageHash, setImageHash] = useState(''); // 存储上传到IPFS的图片哈希
 
   const [detailsShown, setDetailsShown] = useState({});
+  const [selectedState, setSelectedState] = useState('');
+
 
 
   //tabs
@@ -154,9 +157,23 @@ const ContractsDao = () => {
     const filteredEvents = filterEvents();
     setDisplayedEvents(filteredEvents.slice(0, currentPage * pageSize));
 }, [selectedCategory, events, currentPage]);
-  
-  
 
+
+    useEffect(() => {
+      const filterEventsByState = () => {
+        if (selectedState === '') {
+          return events; // If no filter is selected, return all events
+        }
+        return events.filter((event) => {
+          return event.proposalState.toString() === selectedState;
+        });
+      };
+
+      const filteredEvents = filterEventsByState();
+      setDisplayedEvents(filteredEvents);
+    }, [selectedState, events]);
+
+  
   const handleCategoryChange = (e) => {
     setSelectedCategory(e.target.value);
   };
@@ -228,14 +245,14 @@ const ContractsDao = () => {
     setFormData({ ...formData, [name]: value });
   };
   
-  
+  // 处理表单提交
   const handleSubmit = async (e) => {
     
     e.preventDefault();
 
     const proposalData = {
       ...formData,
-      image: imageData
+      imageHash: imageHash // 包含IPFS哈希
     };
 
     const descriptionJSON = JSON.stringify(proposalData);
@@ -298,17 +315,31 @@ const ContractsDao = () => {
   // Helper function to map state number to string
     const getProposalStateString = (stateNumber) => {
       const states = [
-        'Pending',
+        'Pending',  //0
         'Active',
         'Canceled',
         'Defeated',
-        'Succeeded',
+        'Succeeded', //4
         'Queued',
         'Expired',
         'Executed'
       ];
       return states[stateNumber] || 'Unknown';
     };
+
+    //下拉選單
+    const proposalStates = [
+      { value: '', label: '全部狀態' },
+      { value: '0', label: 'Pending' },
+      { value: '1', label: 'Active' },
+      { value: '2', label: 'Canceled' },
+      { value: '3', label: 'Defeated' },
+      { value: '4', label: 'Succeeded' },
+      { value: '5', label: 'Queued' },
+      { value: '6', label: 'Expired' },
+      { value: '7', label: 'Executed' },
+    ];
+    
 
     const handleVote = async (proposalId, voteType) => {
 
@@ -371,7 +402,7 @@ const ContractsDao = () => {
       }
     };
 
-    // 处理图片文件上传
+  // 处理图片文件上传
   const handleImageUpload = async (e) => {
     try {
       const file = e.target.files[0];
@@ -381,6 +412,35 @@ const ContractsDao = () => {
       setImageHash(result.path); // 保存IPFS哈希到状态
     } catch (error) {
       console.error('Error uploading file to IPFS:', error);
+    }
+  };
+
+
+  // 觸發募資案 Function to handle "Execute" button click
+  const handleExecute = async (proposalId, category, targetToken, goalAmount, description) => {
+    
+    setIsSubmitting(true); // Optionally set a submitting/loading state
+
+    try {
+      const actionContract = new ethers.Contract(actionContractAddress, AcontractABI, signer);
+      
+      // If the goals parameter expects a uint8 array, you'll need to convert accordingly
+      const goals = [category]; 
+
+      // Assuming ETH is the target token, you can use the zero address to represent it in the contract call
+      const targetTokenAddress = ethers.constants.AddressZero;
+      const executeTx = await actionContract.createPlan(proposalId, {
+        gasPrice: ethers.utils.parseUnits('10', 'gwei'),
+        gasLimit: 1000000,
+      });
+      console.log('Executing transaction:', executeTx);
+      await executeTx.wait(); // Wait for the transaction to be mined
+      alert('Plan executed successfully!');
+    } catch (error) {
+      console.error('Error executing plan:', error);
+      alert('Failed to execute plan.');
+    } finally {
+      setIsSubmitting(false); // Optionally reset the submitting/loading state
     }
   };
     
@@ -423,12 +483,8 @@ const ContractsDao = () => {
           <form onSubmit={handleSubmit} className={styles.formContainer}>
             {/* Disable the form elements based on isSubmitting state */}
 
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              disabled={isSubmitting}
-            />
+            <input type="file" onChange={handleImageUpload} />
+     
 
           <fieldset disabled={isSubmitting}>
             <div className={styles.formGroup}>
@@ -457,7 +513,7 @@ const ContractsDao = () => {
       ))}
               </select>
             </div>
-      
+
             <div className={styles.formGroup}>
               <label htmlFor="proposalDetail" className={styles.label}>提案內容</label>
               <ReactQuill
@@ -492,17 +548,36 @@ const ContractsDao = () => {
         <option key={goal.id} value={goal.id}>{goal.title}</option>
       ))}
               </select>    
+
+              <div className={styles.formGroup}>
+              <select
+                id="proposalState"
+                name="proposalState"
+                value={selectedState}
+                onChange={(e) => setSelectedState(e.target.value)}
+                className={styles.select}
+              >
+                {proposalStates.map((state) => (
+                  <option key={state.value} value={state.value}>{state.label}</option>
+                ))}
+              </select>
+            </div>
       {displayedEvents.length > 0 ? (
         displayedEvents.map((event, index) => {
           // Assuming event.proposalIdDecimal is the decimal representation of the proposal ID
           // And event.proposalState is the number representing the state
+          // Check if the proposal has succeeded
+          const isProposalSucceeded = event.proposalState === 4; // Assuming '4' is the state code for 'Succeeded'
           const proposalStateString = getProposalStateString(event.proposalState);
            // Access ProposalVotes safely by checking if it exists
           const againstVotes = event.ProposalVotes?.againstVotes.toString() ?? '0';
           const forVotes = event.ProposalVotes?.forVotes.toString() ?? '0';
           const abstainVotes = event.ProposalVotes?.abstainVotes.toString() ?? '0';
+          const imageHash = event.imageHash?.imageHash.toString() ?? '';
 
           let proposalName, proposalCategory, proposalDetail;
+          const imageUrl = `https://ipfs.io/ipfs/${imageHash}`;
+
           try {
             // Parse the description from the JSON string
             const descriptionObj = JSON.parse(event.description);
@@ -527,6 +602,7 @@ const ContractsDao = () => {
             proposalDetail = 'Details are not available';
           }
 
+
           return (
 
             
@@ -536,7 +612,7 @@ const ContractsDao = () => {
           <div key={index} className="event-card">
             <div className="proposal-feature">
     {/* <img src={goals[0].imageUrl} className="proposal-image" alt="Goal" /> */}
-    <img src={event.image} className="proposal-image" alt="Goal" />
+    <img src={event.imageUrl} className="proposal-image" alt="Goal" />
     <div className='feature-content'>
       <div className="vote-flex">
         <p><span>反對數</span>: {againstVotes}</p>
@@ -547,7 +623,12 @@ const ContractsDao = () => {
         <p><span>ID</span>: {event.proposalIdDecimal}</p>
         <p><span>標題</span>: {proposalName}</p>
         <p><span>類型</span>: {proposalCategory}</p>
-        <p><span>狀態</span>: {proposalStateString}</p>
+        <p><span>狀態</span>: {proposalStateString}         
+        {isProposalSucceeded && (
+        <span style={{marginLeft:  '10px'}}><button onClick={() => handleExecute(event.proposalIdDecimal)} disabled={!signer || isSubmitting}>
+        執行
+      </button></span>
+      )}</p>
         { event.proposalState === 1 && !event.userHasVoted ?  (
                 <div>
                   <button disabled={event.userHasVoted || !signer} onClick={() => handleVote(event.proposalIdDecimal, 0)}>反對</button>
@@ -559,6 +640,7 @@ const ContractsDao = () => {
                 // Indicate that the user has already voted if the proposal is Active
                 <p>您已經投過票</p>
               ) : null}
+
       </div>
     </div> 
 
