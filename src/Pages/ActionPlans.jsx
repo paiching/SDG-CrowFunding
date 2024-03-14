@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 import contractABI from '../hooks/contractAbi_DAO.json';
 import AcontractABI from '../hooks/contractAbi_Action.json';
 import NFTcontractABI from '../hooks/contractAbi_NFT.json';
-import styles from './Dao.scss'
+import styles from './ActionPlans.scss'
 import { useAuth } from '../AuthContext';
 import { useLocation } from 'react-router-dom';
 import ReactQuill from 'react-quill';
@@ -32,7 +32,7 @@ const ipfsClient = create({
     authorization: auth,
   },
 });
-const ContractsDao = () => {
+const ActionPlans = () => {
   const { signer, setSigner } = useAuth(); // 从全局上下文中访问签名者
   const [provider, setProvider] = useState('');
   const [description, setDescription] = useState('');
@@ -64,7 +64,8 @@ const ContractsDao = () => {
   const [detailsShown, setDetailsShown] = useState({});
   const [selectedState, setSelectedState] = useState('');
   const [goalAmount, setGoalAmount] = useState('');
-
+  // Assuming `plans` is the state where you store your fetched and processed plans
+  const [plans, setPlans] = useState([]);
 
 
   //tabs
@@ -109,30 +110,40 @@ const ContractsDao = () => {
   //初始
   useEffect(() => {
     const init = async () => {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      setProvider(provider);
-      const contractInstance = new ethers.Contract(contractAddress, contractABI, provider);
-      setContract(contractInstance);
-      await listenForEvents(contractInstance); // Call without a user address
+      if (window.ethereum) {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        setProvider(provider);
+  
+        // Initialize DAO Contract
+        const contractInstance = new ethers.Contract(contractAddress, contractABI, provider);
+        setContract(contractInstance);
+  
+        // Initialize Action Contract
+        const actionContractInstance = new ethers.Contract(actionContractAddress, AcontractABI, provider);
+        setActionContract(actionContractInstance);
+  
+        await listenForActionPlans(actionContractInstance); // Call without a user address
+      }
     };
   
     init();
   }, []);
+  
 
   // signer變化時更新events
   useEffect(() => {
-    const updateSignerAndListenForEvents = async () => {
+    const updateSignerAndlistenForActionPlans = async () => {
       if (signer) {
         const address = await signer.getAddress();
         setUserAddress(address);
         setIsWalletConnected(true);
         const signerContractInstance = new ethers.Contract(contractAddress, contractABI, signer);
         setContract(signerContractInstance);
-        await listenForEvents(signerContractInstance, address); // Call with a user address
+        await listenForActionPlans(signerContractInstance, address); // Call with a user address
       }
     };
 
-    updateSignerAndListenForEvents();
+    updateSignerAndlistenForActionPlans();
   }, [signer]);
 
   //當獲取到用戶地址重新獲取投票狀態
@@ -140,7 +151,7 @@ const ContractsDao = () => {
     const checkVotingStatus = async () => {
       if (contract && userAddress) {
         const updatedEventsWithVotingStatus = await Promise.all(events.map(async (event) => {
-          const hasVoted = await contract.hasVoted(event.proposalIdDecimal, userAddress);
+          const hasVoted = await contract.hasVoted(event.planId, userAddress);
           return { ...event, userHasVoted: hasVoted };
         }));
         setEvents(updatedEventsWithVotingStatus);
@@ -196,53 +207,32 @@ const ContractsDao = () => {
   };
 
 
-  const listenForEvents = async (contractInstance, userAddr = null) => {
+  const listenForActionPlans = async (actionContractInstance, userAddr = null) => {
     try {
-      const eventName = "ProposalCreated";
+      const eventName = "ActionPlanCreated"; // Use the actual event name
       const fromBlock = 0;
       const toBlock = 'latest';
   
-      const eventFilter = contractInstance.filters[eventName]();
-      const fetchedEvents = await contractInstance.queryFilter(eventFilter, fromBlock, toBlock);
-      
-      // 使用Promise.all等待所有的状态查询完成
-      const processedEvents = await Promise.all(fetchedEvents.map(async (event) => {
-        // 提案ID的BigNumber转换成字符串（十进制表示）
-        const proposalIdDecimal = event.args.proposalId.toString();
-        console.log("提案ID:"+proposalIdDecimal);
-        // 使用await来等待异步查询状态
-        const proposalState = await contractInstance.state(proposalIdDecimal);
-
-        let userHasVoted = false;
-        let ProposalVotes = { againstVotes: '0', forVotes: '0', abstainVotes: '0' };
-
-        if (userAddr) {
-          userHasVoted = await contractInstance.hasVoted(proposalIdDecimal, userAddr);
-          ProposalVotes = await contractInstance.proposalVotes(proposalIdDecimal);
-        }
-
-        // Make sure ProposalVotes has the expected structure or provide defaults
-        if (!ProposalVotes || typeof ProposalVotes !== 'object') {
-          ProposalVotes = { againstVotes: '0', forVotes: '0', abstainVotes: '0' };
-        }
-        
-       
+      const plansFilter = actionContractInstance.filters[eventName]();
+      const fetchedPlans = await actionContractInstance.queryFilter(plansFilter, fromBlock, toBlock);
+  
+      const processedPlans = await Promise.all(fetchedPlans.map(async (plan) => {
+        // Process each plan event
+        // Depending on the structure of your ActionPlan event, extract and process necessary info
+        const planId = plan.args.planId.toString(); // Example: Getting planId from event args
+  
         return {
-          ...event.args,
-          proposalIdDecimal,
-          proposalState,
-          userHasVoted,
-          ProposalVotes
+          ...plan.args,
+          planId,
+          // Add any additional processing here
         };
       }));
-
-      console.log(processedEvents);
-      const reversedEvents = processedEvents.reverse(); // Reverse the full list of events for display
-      setEvents(reversedEvents); // Set the full list of events in reversed order
-      setDisplayedEvents(reversedEvents.slice(0, pageSize)); // Display the first page of reversed events
-      setCurrentPage(1); // Reset to the first page
+  
+      // Example: Update the state with fetched plans
+      setPlans(processedPlans); // You might want to rename `setEvents` to something more appropriate
+      console.log("processPlans:"+ JSON.stringify(processedPlans));
     } catch (error) {
-      console.error("Error fetching events:", error);
+      console.error("Error fetching action plans:", error);
     }
   };
   
@@ -262,73 +252,6 @@ const ContractsDao = () => {
     setFormData({ ...formData, [name]: value });
   };
   
-  // 处理表单提交
-  const handleSubmit = async (e) => {
-    
-    e.preventDefault();
-
-    const proposalData = {
-      ...formData,
-      goalAmount, // Add the goalAmount to your proposal data
-      imageHash: imageHash // 包含IPFS哈希
-    };
-
-    const descriptionJSON = JSON.stringify(proposalData);
-    // Start processing
-    setIsSubmitting(true);
-    setSubmissionStatus('Processing...');
-
-    try {
-    await handlePropose(descriptionJSON);
-
-    setSubmissionStatus('Proposal submitted successfully!');
-    setTab("events");
-
-    }catch (error) {
-      console.error("Error submitting proposal:", error);
-      setSubmissionStatus('Failed to submit proposal.');
-    } finally {
-      setIsSubmitting(false);
-    }
-
-  };
-
-  const handlePropose = async (description) => {
-
-    const contractInstance = new ethers.Contract(contractAddress, contractABI, signer);
-    setContract(contractInstance);
-
-    if (contractInstance) {
-      setIsSubmitting(true); // Start the submission process
-      setSubmissionStatus('處理中...'); // Set the status message
-      const targets = ["0xE9748e34c0705d67CdFaAAC2B3eE1031D6c146cF"];
-      const values = [0];
-      const calldatas = ["0x42"];
-      try {
-    
-  
-        const transactionResponse = await contractInstance.propose(targets, values, calldatas, description, {
-          gasPrice: ethers.utils.parseUnits('5', 'gwei'),
-          gasLimit: 1000000
-        });
-        console.log(transactionResponse);
-        // Wait for one confirmation to ensure the event is emitted
-        await transactionResponse.wait(1);
-        // Update the status message
-        setSubmissionStatus('提案發佈完成!');
-        setIsSubmitting(false); // End the submission process
-        setDescription('');
-        // Fetch and display new events
-        await listenForEvents(contract);
-        alert('提案發佈完成');
-
-      } catch (error) {
-        console.error("Error submitting proposal:", error);
-        setSubmissionStatus('提案發佈失敗');
-        setIsSubmitting(false); // End the submission process
-      }
-    }
-  };
 
   // Helper function to map state number to string
     const getProposalStateString = (stateNumber) => {
@@ -388,13 +311,13 @@ const ContractsDao = () => {
 
         //diable button
         const updatedEvents = events.map(event => {
-          if (event.proposalIdDecimal === proposalId) {
+          if (event.planId === proposalId) {
             return { ...event, userHasVoted: true };
           }
           return event;
         });
 
-        setEvents(updatedEvents); // Update your events state
+        setPlans(updatedEvents); // Update your events state
         setSubmissionStatus('Vote successful!');
         setIsSubmitting(false);
 
@@ -504,86 +427,11 @@ const ContractsDao = () => {
    
       {/* Display submission status */}
     {isSubmitting && <div className="submission-status">{submissionStatus}</div>}
-      <dv className='tabButtons'>
+      {/* <dv className='tabButtons'>
         <button onClick={() => switchTab('form')}>發起提案</button>
         <button onClick={() => switchTab('events')}>提案列表</button>
-      </dv>
+      </dv> */}
       
-
-      {tab === 'form' && (
-        <div className={styles.wrapper}>
-          <form onSubmit={handleSubmit} className={styles.formContainer}>
-            {/* Disable the form elements based on isSubmitting state */}
-
-            <input type="file" onChange={handleImageUpload} />
-     
-
-          <fieldset disabled={isSubmitting}>
-            <div className={styles.formGroup}>
-              <label htmlFor="proposalName" className={styles.label}>提案名稱</label>
-              <input
-                id="proposalName"
-                type="text"
-                name="proposalName"
-                value={formData.proposalName}
-                onChange={handleInputChange}
-                className={styles.input}
-              />
-            </div>
-            <div className={styles.formGroup}>
-              <label htmlFor="proposalCategory" className={styles.label}>提案類別</label>
-              <select
-                id="proposalCategory"
-                name="proposalCategory"
-                value={formData.proposalCategory}
-                onChange={handleInputChange}
-                className={styles.select}
-              >
-                <option value="">請選擇類別</option>
-                {goals.map((goal) => (
-        <option key={goal.id} value={goal.id}>{goal.title}</option>
-      ))}
-              </select>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="goalAmount" className={styles.label}>目標金額</label>
-              <input
-                id="goalAmount"
-                type="number" // or "text" if you plan to parse/format the input value
-                name="goalAmount"
-                value={goalAmount}
-                onChange={(e) => setGoalAmount(e.target.value)}
-                className={styles.input}
-                min="0" // Assuming goalAmount cannot be negative
-                step="any" // Allows decimal values
-              />
-            </div>
-
-
-            <div className={styles.formGroup}>
-              <label htmlFor="proposalDetail" className={styles.label}>提案內容</label>
-              <ReactQuill
-                value={formData.proposalDetail}
-                onChange={(content) => setFormData({ ...formData, proposalDetail: content })}
-                readOnly={isSubmitting}
-                theme="snow"
-              />
-            </div>
-
-            <button 
-            className="mint-button" 
-            type="submit"
-            disabled={!signer} // Disable the button if the wallet is not connected
-          >
-            {signer ? '提交提案' : '連結錢包'} 
-          </button>
-            {/* <button type="submit" className={styles.submitButton}>提交提案</button> */}
-            </fieldset>
-          </form>
-        </div>
-      )}
-
 
     {tab === 'events' && (
       
@@ -609,39 +457,61 @@ const ContractsDao = () => {
                 ))}
               </select>
             </div>
-      {displayedEvents.length > 0 ? (
-        displayedEvents.map((event, index) => {
+      {plans.length > 0 ? (
+        plans.map((event, index) => {
+          let proposalDetailsHTML = '';
           // Assuming event.proposalIdDecimal is the decimal representation of the proposal ID
           // And event.proposalState is the number representing the state
           // Check if the proposal has succeeded
           const isProposalSucceeded = event.proposalState === 4; // Assuming '4' is the state code for 'Succeeded'
-          const canExecute = isProposalSucceeded && !event.isExecuted;
+         
+          console.log('Raw description:', event.description);
 
           const proposalStateString = getProposalStateString(event.proposalState);
            // Access ProposalVotes safely by checking if it exists
-          const againstVotes = event.ProposalVotes?.againstVotes.toString() ?? '0';
-          const forVotes = event.ProposalVotes?.forVotes.toString() ?? '0';
-          const abstainVotes = event.ProposalVotes?.abstainVotes.toString() ?? '0';
+   
           const imageHash = event.imageHash?.imageHash.toString() ?? '';
 
           let proposalName, proposalCategory, proposalDetail;
           const imageUrl = `https://ipfs.io/ipfs/${imageHash}`;
 
+
+          let jsonString = event.description;
+
+          // Attempt to fix the unquoted keys if they follow a predictable pattern
+        
+
           try {
+      
+            //const descriptionObj = JSON.parse(jsonString);
             // Parse the description from the JSON string
-            const descriptionObj = JSON.parse(event.description);
-            const cleanHTML = DOMPurify.sanitize(event.description);
-           
+            //const descriptionObj = JSON.parse(event.description);
+            const descriptionObject = {
+              "proposalName": "海廢議題",
+              "proposalCategory": "14",
+              "proposalAmount": "",
+              "proposalStartDate": "",
+              "proposalEndDate": "",
+              "proposalDetails": [
+                {
+                  "detail": ""
+                }
+              ],
+              "proposalDetail": "<p>海洋守護者計劃致力於全球範圍內減少海洋廢棄物，特別是塑料污染，通過組織國際海灘清理日、深海清理活動以及提升公眾對海洋保護意識的教育項目。該計劃結合當地社區、政府、企業和國際組織的力量，共同對抗海洋污染問題，保護海洋生態系統。</p><h3>時間與地點</h3><ul><li><span style=\"color: var(--tw-prose-bold);\">時間</span>：2024年9月第一週，國際海灘清理日進行全天活動</li><li><span style=\"color: var(--tw-prose-bold);\">地點</span>：全球範圍內的重點海灘和沿海區域，具體地點將根據海洋垃圾分布和當地社區參與度確定</li></ul><h3>預算</h3><p>預算為0.002 ETH（根據當前匯率調整），將用於以下方面：</p><ul><li>海灘清理工具和物資（包括垃圾袋、手套、夾子等）</li><li>深海清理設備和專業潛水團隊的費用</li><li>教育宣傳材料和活動的組織開銷</li><li>志願者激勵（如紀念品、食物和飲水）</li></ul><h3>預期效果</h3><ol><li><span style=\"color: var(--tw-prose-bold);\">環境影響</span>：預計清除超過500公斤的海洋廢棄物，包括塑料、廢棄漁網等，減少對海洋生態系統的威脅。</li><li><span style=\"color: var(--tw-prose-bold);\">社區參與和意識提升</span>：預期動員超過1000名志願者參與清理活動，同時通過教育活動提高至少5000人的海洋保護意識。</li><li><span style=\"color: var(--tw-prose-bold);\">政策影響和持續行動</span>：與政府和企業合作，推動更嚴格的塑料使用規範和廢棄物管理政策，並鼓勵社區持續參與海洋保護活動。</li></ol><h3>實施細節</h3><ul><li><span style=\"color: var(--tw-prose-bold);\">前期準備</span>：透過合作夥伴和社交媒體廣泛宣傳，籌備志願者培訓資料和宣傳材料。</li><li><span style=\"color: var(--tw-prose-bold);\">活動執行</span>：在國際海灘清理日當天，組織分散在全球各地的清理活動，並通過專業潛水團隊進行深海清理。</li><li><span style=\"color: var(--tw-prose-bold);\">後續行動</span>：收集和分析清理數據，報告活動成效，並通過網絡論壇和工作坊繼續推廣海洋保護的信息。</li></ul><p><br></p>",
+              "goalAmount": "0.002",
+              "imageHash": ""
+            };
+            
+            const descriptionString = JSON.stringify(descriptionObject);
+
+            // Extract the proposalDetails and convert it to sanitized HTML
+            proposalDetailsHTML = DOMPurify.sanitize(descriptionObject.proposalDetail);
 
             // Extract the values for display
-            proposalName = descriptionObj.proposalName;
-            proposalCategory = descriptionObj.proposalCategory;
-            proposalDetail = descriptionObj.proposalDetail || (descriptionObj.proposalDetails && descriptionObj.proposalDetails[0].detail);
-            console.log("Proposal State:", event.proposalState);
-            console.log("User Vote Right:", event.userVoteRight);
-            console.log("User Has Voted:", event.userHasVoted);
-            console.log("voteStart:", event.voteStart.toString());
-            console.log("voteEnd:", event.voteEnd.toString());
+            // proposalName = event.proposalName;
+            // proposalCategory = descriptionObj.proposalCategory;
+            // proposalDetail = event.description.proposalDetail;
+ 
 
           } catch (e) {
             console.error('Error parsing description:', e);
@@ -649,6 +519,8 @@ const ContractsDao = () => {
             proposalName = 'Unknown';
             proposalCategory = 'Unknown';
             proposalDetail = 'Details are not available';
+            proposalDetailsHTML = '<p>Details are not available</p>';
+
           }
 
 
@@ -663,57 +535,26 @@ const ContractsDao = () => {
     {/* <img src={goals[0].imageUrl} className="proposal-image" alt="Goal" /> */}
     <img src={event.imageUrl} className="proposal-image" alt="Goal" />
     <div className='feature-content'>
-      <div className="vote-flex">
-        <p><span>反對數</span>: {againstVotes}</p>
-        <p><span>贊成數</span>: {forVotes}</p>
-        <p><span>棄票數</span>: {abstainVotes}</p>
-      </div>
       <div className='feature-desc'>
-        <p><span>ID</span>: {event.proposalIdDecimal}</p>
-        <p><span>標題</span>: {proposalName}</p>
+        <p><span>ID</span>: {event.planId}</p>
+        <p><span>標題</span>: {event.proposalName}</p>
         <p><span>類型</span>: {proposalCategory}</p>
-        <p><span>目標金額</span>: {event.goalAmount}</p> {/* Adjust if your event object structure is different */}
-        <p><span>狀態</span>: {proposalStateString}         
-        {isProposalSucceeded && (
-        <span style={{marginLeft:  '10px'}}>
-            {canExecute && (
-              <button onClick={() => handleExecute(
-                event.proposalIdDecimal, 
-                event.category, // Assuming you have this value from your event
-                ethers.constants.AddressZero, // For ETH
-                event.goalAmount, // Pass the goal amount to the execute function
-                event.description // Assuming this is a JSON string
-              )} disabled={!signer || isSubmitting}>
-                Execute
-              </button>
-            )}
-      </span>
-      )}</p>
-        { event.proposalState === 1 && !event.userHasVoted ?  (
-                <div>
-                  <button disabled={event.userHasVoted || !signer} onClick={() => handleVote(event.proposalIdDecimal, 0)}>反對</button>
-                  <button disabled={event.userHasVoted || !signer} onClick={() => handleVote(event.proposalIdDecimal, 1)}>贊成</button>
-                  <button disabled={event.userHasVoted || !signer} onClick={() => handleVote(event.proposalIdDecimal, 2)}>棄票</button>
-                  <div> {signer ? null : ( <div> <p>請連結錢包...</p></div>)}</div>
-                </div>
-              ) : event.userHasVoted ? (
-                // Indicate that the user has already voted if the proposal is Active
-                <p>您已經投過票</p>
-              ) : null}
-
+        <p><span>目標金額</span>: {event.goalAmount.toString()}</p> {/* Adjust if your event object structure is different */}
+        <p><span>狀態</span>: {proposalStateString} </p>
       </div>
     </div> 
 
   </div>
-        {/* Conditionally render proposalDetail */}
-      {detailsShown[event.proposalIdDecimal] && (
-        <div dangerouslySetInnerHTML={cleanHTML(proposalDetail)} />
-      )}
 
-      {/* Read More / Collapse Button */}
-      <button onClick={() => toggleDetails(event.proposalIdDecimal)} className="read-more-button">
-        {detailsShown[event.proposalIdDecimal] ? '收起' : '提案詳情'}
-      </button>
+        {/* Details container */}
+               {detailsShown[event.planId] && (
+          <div dangerouslySetInnerHTML={{ __html: proposalDetailsHTML }} />
+        )}
+
+        {/* Toggle button */}
+        <button onClick={() => toggleDetails(event.planId)}>
+          {detailsShown[event.planId] ? '收起' : '提案詳情'}
+        </button>
              
             </div>{/* end of event-card */}
       </div>
@@ -740,4 +581,4 @@ const ContractsDao = () => {
   );
 };
 
-export default ContractsDao;
+export default ActionPlans;

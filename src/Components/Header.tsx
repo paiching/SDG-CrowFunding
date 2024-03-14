@@ -64,6 +64,9 @@ export default function Header() {
           <Link to="/usedao">
             <div className={styles.link}>UseDAO</div>
           </Link> */}
+          <Link to="/plans">
+            <div className={styles.link}>募資計畫</div>
+          </Link>
           <Link to="/dao">
             <div className={styles.link}>DAO</div>
           </Link>
