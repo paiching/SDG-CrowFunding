@@ -66,10 +66,7 @@ const ContractsDao = () => {
 
   const [detailsShown, setDetailsShown] = useState({});
   const [selectedState, setSelectedState] = useState('');
-<<<<<<< HEAD
   const [goalAmount, setGoalAmount] = useState('');
-=======
->>>>>>> 5d2414375248fabc884ef7c91adac0bd17e138ee
 
 
 
