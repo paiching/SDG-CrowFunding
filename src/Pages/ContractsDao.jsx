@@ -18,14 +18,14 @@ window.Buffer = Buffer; // Assign it to window to make it available globally
 const contractAddress = "0xF3116499767692201519949B8c20092419d12009";
 const TokenContractAddress = "0x86746fF42E7EC38A225d8C3005F7F2B7a18d137C";
 const actionContractAddress = "0x9cAE0C0148E6d51d000aefE2A07f1d32c5886fCc"; // Action contract address
-<<<<<<< HEAD
-const projectId = process.env.REACT_INFURA_PROJECT_ID;
-const projectSecret = process.env.REACT_INFURA_PROJECT_SECRET;
-=======
->>>>>>> 5d2414375248fabc884ef7c91adac0bd17e138ee
+
+//const projectId = process.env.REACT_INFURA_PROJECT_ID;
+// const projectSecret = process.env.REACT_INFURA_PROJECT_SECRET;
 
 
-const auth = 'Basic ' + btoa(projectId + ':' + projectSecret);
+
+// const auth = 'Basic ' + btoa(projectId + ':' + projectSecret);
+const auth = 'Basic ';
 
 const ipfsClient = create({
   host: 'ipfs.infura.io',
