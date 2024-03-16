@@ -18,8 +18,11 @@ window.Buffer = Buffer; // Assign it to window to make it available globally
 const contractAddress = "0xF3116499767692201519949B8c20092419d12009";
 const TokenContractAddress = "0x86746fF42E7EC38A225d8C3005F7F2B7a18d137C";
 const actionContractAddress = "0x9cAE0C0148E6d51d000aefE2A07f1d32c5886fCc"; // Action contract address
+<<<<<<< HEAD
 const projectId = process.env.REACT_INFURA_PROJECT_ID;
 const projectSecret = process.env.REACT_INFURA_PROJECT_SECRET;
+=======
+>>>>>>> 5d2414375248fabc884ef7c91adac0bd17e138ee
 
 
 const auth = 'Basic ' + btoa(projectId + ':' + projectSecret);
@@ -63,7 +66,10 @@ const ContractsDao = () => {
 
   const [detailsShown, setDetailsShown] = useState({});
   const [selectedState, setSelectedState] = useState('');
+<<<<<<< HEAD
   const [goalAmount, setGoalAmount] = useState('');
+=======
+>>>>>>> 5d2414375248fabc884ef7c91adac0bd17e138ee
 
 
 
@@ -269,7 +275,10 @@ const ContractsDao = () => {
 
     const proposalData = {
       ...formData,
+<<<<<<< HEAD
       goalAmount, // Add the goalAmount to your proposal data
+=======
+>>>>>>> 5d2414375248fabc884ef7c91adac0bd17e138ee
       imageHash: imageHash // 包含IPFS哈希
     };
 
@@ -475,6 +484,35 @@ const ContractsDao = () => {
       setIsSubmitting(false); // Optionally reset the submitting/loading state
     }
   };
+
+
+  // 觸發募資案 Function to handle "Execute" button click
+  const handleExecute = async (proposalId, category, targetToken, goalAmount, description) => {
+    
+    setIsSubmitting(true); // Optionally set a submitting/loading state
+
+    try {
+      const actionContract = new ethers.Contract(actionContractAddress, AcontractABI, signer);
+      
+      // If the goals parameter expects a uint8 array, you'll need to convert accordingly
+      const goals = [category]; 
+
+      // Assuming ETH is the target token, you can use the zero address to represent it in the contract call
+      const targetTokenAddress = ethers.constants.AddressZero;
+      const executeTx = await actionContract.createPlan(proposalId, {
+        gasPrice: ethers.utils.parseUnits('10', 'gwei'),
+        gasLimit: 1000000,
+      });
+      console.log('Executing transaction:', executeTx);
+      await executeTx.wait(); // Wait for the transaction to be mined
+      alert('Plan executed successfully!');
+    } catch (error) {
+      console.error('Error executing plan:', error);
+      alert('Failed to execute plan.');
+    } finally {
+      setIsSubmitting(false); // Optionally reset the submitting/loading state
+    }
+  };
     
     
 
@@ -546,6 +584,7 @@ const ContractsDao = () => {
               </select>
             </div>
 
+<<<<<<< HEAD
             <div className={styles.formGroup}>
               <label htmlFor="goalAmount" className={styles.label}>目標金額</label>
               <input
@@ -561,6 +600,8 @@ const ContractsDao = () => {
             </div>
 
 
+=======
+>>>>>>> 5d2414375248fabc884ef7c91adac0bd17e138ee
             <div className={styles.formGroup}>
               <label htmlFor="proposalDetail" className={styles.label}>提案內容</label>
               <ReactQuill
@@ -615,8 +656,11 @@ const ContractsDao = () => {
           // And event.proposalState is the number representing the state
           // Check if the proposal has succeeded
           const isProposalSucceeded = event.proposalState === 4; // Assuming '4' is the state code for 'Succeeded'
+<<<<<<< HEAD
           const canExecute = isProposalSucceeded && !event.isExecuted;
 
+=======
+>>>>>>> 5d2414375248fabc884ef7c91adac0bd17e138ee
           const proposalStateString = getProposalStateString(event.proposalState);
            // Access ProposalVotes safely by checking if it exists
           const againstVotes = event.ProposalVotes?.againstVotes.toString() ?? '0';
@@ -672,6 +716,7 @@ const ContractsDao = () => {
         <p><span>ID</span>: {event.proposalIdDecimal}</p>
         <p><span>標題</span>: {proposalName}</p>
         <p><span>類型</span>: {proposalCategory}</p>
+<<<<<<< HEAD
         <p><span>目標金額</span>: {event.goalAmount}</p> {/* Adjust if your event object structure is different */}
         <p><span>狀態</span>: {proposalStateString}         
         {isProposalSucceeded && (
@@ -688,6 +733,13 @@ const ContractsDao = () => {
               </button>
             )}
       </span>
+=======
+        <p><span>狀態</span>: {proposalStateString}         
+        {isProposalSucceeded && (
+        <span style={{marginLeft:  '10px'}}><button onClick={() => handleExecute(event.proposalIdDecimal)} disabled={!signer || isSubmitting}>
+        執行
+      </button></span>
+>>>>>>> 5d2414375248fabc884ef7c91adac0bd17e138ee
       )}</p>
         { event.proposalState === 1 && !event.userHasVoted ?  (
                 <div>

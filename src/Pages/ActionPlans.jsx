@@ -502,6 +502,7 @@ const ActionPlans = () => {
               "imageHash": ""
             };
             
+            
             const descriptionString = JSON.stringify(descriptionObject);
 
             // Extract the proposalDetails and convert it to sanitized HTML
