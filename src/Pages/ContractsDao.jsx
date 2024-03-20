@@ -274,13 +274,15 @@ const ContractsDao = () => {
       imageHash: imageHash // 包含IPFS哈希
     };
 
+    console.log("goalAmount"+goalAmount);
+
     const descriptionJSON = JSON.stringify(proposalData);
     // Start processing
     setIsSubmitting(true);
     setSubmissionStatus('Processing...');
 
     try {
-    await handlePropose(descriptionJSON);
+    await handlePropose(formData.proposalCategory,goalAmount,descriptionJSON);
 
     setSubmissionStatus('Proposal submitted successfully!');
     setTab("events");
@@ -294,20 +296,32 @@ const ContractsDao = () => {
 
   };
 
-  const handlePropose = async (description) => {
+  const handlePropose = async (proposalCategory,goalAmount,description) => {
 
     const contractInstance = new ethers.Contract(contractAddress, contractABI, signer);
     setContract(contractInstance);
 
+    const actionPlanInstance = new ethers.Contract(actionContractAddress, AcontractABI, signer);
+   
     if (contractInstance) {
       setIsSubmitting(true); // Start the submission process
       setSubmissionStatus('處理中...'); // Set the status message
-      const targets = ["0xE9748e34c0705d67CdFaAAC2B3eE1031D6c146cF"];
+      const targets = ["0x9cAE0C0148E6d51d000aefE2A07f1d32c5886fCc"];
       const values = [0];
-      const calldatas = ["0x42"];
+      const functionToCall = 'createActionPlan';
+      // The arguments for the function call
+      const goalsArray = [12]; 
+
+      const args = [
+        goalsArray, // _goals
+        "0x7169D38820dfd117C3FA1f22a697dBA58d90BA06", // _targetToken
+        ethers.utils.parseUnits('8', 6), // for tokens with 6 decimal places
+        description // _description
+      ];
+      // Encode the function call
+      const encode = actionPlanInstance.interface.encodeFunctionData(functionToCall, args);
+      const calldatas = [encode];
       try {
-    
-  
         const transactionResponse = await contractInstance.propose(targets, values, calldatas, description, {
           gasPrice: ethers.utils.parseUnits('5', 'gwei'),
           gasLimit: 1000000
@@ -442,38 +456,81 @@ const ContractsDao = () => {
   
   
 
-
   // 觸發募資案 Function to handle "Execute" button click
-  const handleExecute = async (proposalId, category, targetToken, goalAmount, description) => {
+  const handleExecute = async (proposalId, category, targetToken, goalAmount, calldata,description) => {
     
     setIsSubmitting(true); // Optionally set a submitting/loading state
+    setSubmissionStatus('處理中...'); // Set the status message
+    //console.log('goalAmount+++:', goalAmount); // Check the value of goalAmount
+    let payableAmount;
+      try {
+        payableAmount = ethers.utils.parseUnits(goalAmount.toString(), 6);
+        //payableAmount = ethers.utils.parseUnits(goalAmount.toString(), 'ether'); // assuming goalAmount is in ether
+      } catch (error) {
+        // Handle the error, maybe by setting a default value or rethrowing a more descriptive error
+        console.error('Error parsing goalAmount:', error);
+        setIsSubmitting(false);
+      }
+ 
+    // The arguments for the function call
+    const goalsArray = [12];
+    const targets = ["0x9cAE0C0148E6d51d000aefE2A07f1d32c5886fCc"];
+    //const values = [0];
+    const values = [1];
+    // Convert BigNumbers to strings
+    
+    //const functionToCall = 'createActionPlan';
+    // const args = [
+    //   goalsArray, // _goals
+    //   "0x7169D38820dfd117C3FA1f22a697dBA58d90BA06", // _targetToken USDT sepolia
+    //   ethers.utils.parseUnits('8', 6), // for tokens with 6 decimal places
+    //   description // _description
+    // ];
+    // Encode the function call
+    //const encode = actionPlanInstance.interface.encodeFunctionData(functionToCall, args);
+    const calldatas = calldata;
+   
+    const descriptionHash = ethers.utils.keccak256(
+      ethers.utils.toUtf8Bytes(description)
+    );
 
     try {
-      const actionContract = new ethers.Contract(actionContractAddress, AcontractABI, signer);
-      
-      // If the goals parameter expects a uint8 array, you'll need to convert accordingly
-      const goals = [category]; 
+      const contractInstance = new ethers.Contract(contractAddress, contractABI, signer);
+      setContract(contractInstance);
+      // const transactionResponse = await contractInstance.execute(payableAmount, targets, values, calldatas, descriptionHash, {
+      //   gasPrice: ethers.utils.parseUnits('5', 'gwei'),
+      //   gasLimit: 1000000
+      // });
 
-      // Assuming ETH is the target token, you can use the zero address to represent it in the contract call
-      const targetTokenAddress = ethers.constants.AddressZero;
-      
-      // Convert the goal amount to the correct format (wei for ETH)
-      const goalAmountWei = ethers.utils.parseUnits(goalAmount.toString(), 'ether');
+      // Corrected call to match the expected parameter count and types
+      const transactionResponse = await contractInstance.execute(
+        //payableAmount, // This should be a string
+        targets,
+        values,
+        calldatas,
+        descriptionHash,
+        {
+          gasPrice: ethers.utils.parseUnits('10', 'gwei'),
+          value: ethers.utils.parseUnits("0.001", 'ether'),
+          gasLimit: 1000000
+        }
+      );
 
-     // Pass the event description as is if it's already a JSON string
-      const executeTx = await actionContract.createActionPlan(goals, targetTokenAddress, goalAmountWei, description, {
-        value: goalAmountWei, // If you need to send ETH along with the transaction
-        gasPrice: ethers.utils.parseUnits('10', 'gwei'),
-        gasLimit: 1000000,
-      });
-      console.log('Executing transaction:', executeTx);
-      await executeTx.wait(); // Wait for the transaction to be mined
-      alert('Plan executed successfully!');
+      console.log(transactionResponse);
+      // Wait for one confirmation to ensure the event is emitted
+      await transactionResponse.wait(1);
+      // Update the status message
+      setSubmissionStatus('計畫執行完成!');
+      setIsSubmitting(false); // End the submission process
+      setDescription('');
+      // Fetch and display new events
+      await listenForEvents(contract);
+      alert('計畫發佈完成');
+
     } catch (error) {
-      console.error('Error executing plan:', error);
-      alert('Failed to execute plan.');
-    } finally {
-      setIsSubmitting(false); // Optionally reset the submitting/loading state
+      console.error("計畫發佈失敗:", error);
+      setSubmissionStatus('計畫發佈失敗');
+      setIsSubmitting(false); // End the submission process
     }
   };
     
@@ -612,6 +669,7 @@ const ContractsDao = () => {
             </div>
       {displayedEvents.length > 0 ? (
         displayedEvents.map((event, index) => {
+          let proposalDetail, proposalName, proposalCategory, proposalGoalAmount;
           // Assuming event.proposalIdDecimal is the decimal representation of the proposal ID
           // And event.proposalState is the number representing the state
           // Check if the proposal has succeeded
@@ -624,8 +682,6 @@ const ContractsDao = () => {
           const forVotes = event.ProposalVotes?.forVotes.toString() ?? '0';
           const abstainVotes = event.ProposalVotes?.abstainVotes.toString() ?? '0';
           const imageHash = event.imageHash?.imageHash.toString() ?? '';
-
-          let proposalName, proposalCategory, proposalDetail;
           const imageUrl = `https://ipfs.io/ipfs/${imageHash}`;
 
           try {
@@ -638,6 +694,7 @@ const ContractsDao = () => {
             proposalName = descriptionObj.proposalName;
             proposalCategory = descriptionObj.proposalCategory;
             proposalDetail = descriptionObj.proposalDetail || (descriptionObj.proposalDetails && descriptionObj.proposalDetails[0].detail);
+            proposalGoalAmount = descriptionObj.goalAmount;
             console.log("Proposal State:", event.proposalState);
             console.log("User Vote Right:", event.userVoteRight);
             console.log("User Has Voted:", event.userHasVoted);
@@ -650,6 +707,7 @@ const ContractsDao = () => {
             proposalName = 'Unknown';
             proposalCategory = 'Unknown';
             proposalDetail = 'Details are not available';
+            proposalGoalAmount = 'Unknown'; // 默认值或错误处理
           }
 
 
@@ -673,7 +731,7 @@ const ContractsDao = () => {
         <p><span>ID</span>: {event.proposalIdDecimal}</p>
         <p><span>標題</span>: {proposalName}</p>
         <p><span>類型</span>: {proposalCategory}</p>
-        <p><span>目標金額</span>: {event.goalAmount}</p> {/* Adjust if your event object structure is different */}
+        <p><span>目標金額</span>: {proposalGoalAmount}</p> {/* parse goalAmount from description */}
         <p><span>狀態</span>: {proposalStateString}         
         {isProposalSucceeded && (
         <span style={{marginLeft:  '10px'}}>
@@ -682,7 +740,8 @@ const ContractsDao = () => {
                 event.proposalIdDecimal, 
                 event.category, // Assuming you have this value from your event
                 ethers.constants.AddressZero, // For ETH
-                event.goalAmount, // Pass the goal amount to the execute function
+                proposalGoalAmount, // Pass the goal amount to the execute function
+                event.calldatas,
                 event.description // Assuming this is a JSON string
               )} disabled={!signer || isSubmitting}>
                 Execute
