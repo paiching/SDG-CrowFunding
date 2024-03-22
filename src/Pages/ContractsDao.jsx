@@ -272,8 +272,8 @@ const ContractsDao = () => {
     const proposalData = {
       ...formData,
       goalAmount, // Add the goalAmount to your proposal data
-      imageHash: imageHash, // 包含IPFS哈希
-      imageUrl: imageURL // 包含IPFS哈希
+      //imageHash, // 包含IPFS哈希
+      imageURL // 包含IPFS哈希
     };
 
     console.log("goalAmount"+goalAmount);
@@ -599,6 +599,7 @@ const ContractsDao = () => {
 
             <div>
       <input type="file" onChange={handleFileChange} />
+      <input type="hidden" name="imageURL" value={imageURL}/>
       <button type="button" onClick={uploadFileToPinata}>上傳到 Pinata</button>
     </div>
      
@@ -696,7 +697,7 @@ const ContractsDao = () => {
             </div>
       {displayedEvents.length > 0 ? (
         displayedEvents.map((event, index) => {
-          let proposalDetail, proposalName, proposalCategory, proposalGoalAmount;
+          let proposalDetail, proposalName, proposalCategory, proposalGoalAmount,proposalImageUrl;
           // Assuming event.proposalIdDecimal is the decimal representation of the proposal ID
           // And event.proposalState is the number representing the state
           // Check if the proposal has succeeded
@@ -708,9 +709,9 @@ const ContractsDao = () => {
           const againstVotes = event.ProposalVotes?.againstVotes.toString() ?? '0';
           const forVotes = event.ProposalVotes?.forVotes.toString() ?? '0';
           const abstainVotes = event.ProposalVotes?.abstainVotes.toString() ?? '0';
-          const imageHash = event.imageHash?.imageHash.toString() ?? '';
+          //const imageHash = event.imageHash?.imageHash.toString() ?? '';
           //const imageUrl = `https://ipfs.io/ipfs/${imageHash}`;
-          const imageUrl = descriptionObj.imageUrl; // Assume imageUrl is a key in the description JSON
+          const imageUrl = event.imageURL?.imageURL.toString() ?? ''; // Assume imageUrl is a key in the description JSON
           
           try {
             // Parse the description from the JSON string
@@ -723,6 +724,7 @@ const ContractsDao = () => {
             proposalCategory = descriptionObj.proposalCategory;
             proposalDetail = descriptionObj.proposalDetail || (descriptionObj.proposalDetails && descriptionObj.proposalDetails[0].detail);
             proposalGoalAmount = descriptionObj.goalAmount;
+            proposalImageUrl = descriptionObj.imageURL;
             console.log("Proposal State:", event.proposalState);
             console.log("User Vote Right:", event.userVoteRight);
             console.log("User Has Voted:", event.userHasVoted);
@@ -736,6 +738,7 @@ const ContractsDao = () => {
             proposalCategory = 'Unknown';
             proposalDetail = 'Details are not available';
             proposalGoalAmount = 'Unknown'; // 默认值或错误处理
+            imageUrl = null; // Set imageUrl to null if parsing fails
           }
 
 
@@ -748,7 +751,12 @@ const ContractsDao = () => {
           <div key={index} className="event-card">
     <div className="proposal-feature">
     {/* <img src={goals[0].imageUrl} className="proposal-image" alt="Goal" /> */}
-    <img src={event.imageUrl} className="proposal-image" alt="Goal" />
+     {/* If imageUrl exists, render it */}
+     {proposalImageUrl && (
+          <div className='image-container'>
+            <img src={proposalImageUrl} className="proposal-image" alt="Uploaded" />
+          </div>
+        )}
     <div className='feature-content'>
       <div className="vote-flex">
         <p><span>反對數</span>: {againstVotes}</p>
