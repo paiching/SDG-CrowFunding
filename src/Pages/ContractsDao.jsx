@@ -11,6 +11,7 @@ import 'react-quill/dist/quill.snow.css'; // import styles
 import DOMPurify from 'dompurify';
 import { create } from 'ipfs-http-client';
 import { Buffer } from 'buffer';
+import axios from 'axios';
 
 window.Buffer = Buffer; // Assign it to window to make it available globally
 
@@ -65,8 +66,8 @@ const ContractsDao = () => {
   const [detailsShown, setDetailsShown] = useState({});
   const [selectedState, setSelectedState] = useState('');
   const [goalAmount, setGoalAmount] = useState('');
-
-
+  const [file, setFile] = useState(null); //pinata
+  const [imageURL, setImageURL] = useState(''); // 添加这个状态来保存图片的 URL
 
   //tabs
   const [tab, setTab] = useState('events'); // 'form' or 'events'
@@ -271,7 +272,8 @@ const ContractsDao = () => {
     const proposalData = {
       ...formData,
       goalAmount, // Add the goalAmount to your proposal data
-      imageHash: imageHash // 包含IPFS哈希
+      imageHash: imageHash, // 包含IPFS哈希
+      imageUrl: imageURL // 包含IPFS哈希
     };
 
     console.log("goalAmount"+goalAmount);
@@ -424,37 +426,6 @@ const ContractsDao = () => {
       setTab(selectedTab);
     };
 
-    const handleImageChange = (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setImageData(reader.result);
-        };
-        reader.readAsDataURL(file);
-      }
-    };
-
-  // 处理图片文件上传
-  const handleImageUpload = async (e) => {
-    setIsSubmitting(true);
-    try {
-      const file = e.target.files[0];
-      if (!file) throw new Error("No file selected");
-  
-      const result = await ipfsClient.add(file);
-      setImageHash(result.path); // This sets the state
-      console.log('Image uploaded to IPFS with hash:', result.path);
-  
-      // ... Rest of your code to handle the uploaded image
-    } catch (error) {
-      console.error('Error uploading file to IPFS:', error);
-      // Handle the error state here
-    }
-    setIsSubmitting(false);
-  };
-  
-  
 
   // 觸發募資案 Function to handle "Execute" button click
   const handleExecute = async (proposalId, category, targetToken, goalAmount, calldata,description) => {
@@ -533,6 +504,8 @@ const ContractsDao = () => {
       setIsSubmitting(false); // End the submission process
     }
   };
+
+  
     
     
 
@@ -557,6 +530,49 @@ const ContractsDao = () => {
       // ... (populate this array with real goal data)
     ];
 
+  
+     
+    
+      const handleFileChange = (event) => {
+        setFile(event.target.files[0]);
+        
+      };
+    
+      const uploadFileToPinata = async () => {
+        if (!file) return;
+    
+        const url = `https://api.pinata.cloud/pinning/pinFileToIPFS`;
+        let data = new FormData();
+        data.append('file', file);
+    
+        const options = {
+          method: 'POST',
+          url: url,
+          headers: {
+            'Content-Type': `multipart/form-data; boundary=${data._boundary}`,
+            pinata_api_key: '9ebe1561750e504cd5db',
+            pinata_secret_api_key: '7477773a8a96c25494e082ce12ee21720a2463267b32f25494b1d4d0e4a56b75',
+          },
+          data: data,
+        };
+    
+        try {
+          const response = await axios(options);
+          console.log(response.data);
+          alert('檔案上傳成功！');
+          setImageHash(response.data.IpfsHash); // 假设返回的数据中包含IPFS哈希
+          setImageURL(`https://ipfs.io/ipfs/${response.data.IpfsHash}`); // 设置图片 URL
+        } catch (error) {
+          console.error(error);
+          alert('檔案上傳失敗。');
+        } finally {
+          setIsSubmitting(false); // 结束上传过程
+        }
+      };
+   
+
+    
+
   return (
     <div className='proposalContainer'>
    
@@ -570,10 +586,21 @@ const ContractsDao = () => {
 
       {tab === 'form' && (
         <div className={styles.wrapper}>
+        {/* Image preview or upload prompt */}
+        <div className={styles.imageUploadPreview}>
+          {imageURL ? (
+            <img src={imageURL} alt="Uploaded" className={styles.uploadedImage} />
+          ) : (
+            <p>請上傳圖片</p>
+          )}
+        </div>
           <form onSubmit={handleSubmit} className={styles.formContainer}>
             {/* Disable the form elements based on isSubmitting state */}
 
-            <input type="file" onChange={handleImageUpload} />
+            <div>
+      <input type="file" onChange={handleFileChange} />
+      <button type="button" onClick={uploadFileToPinata}>上傳到 Pinata</button>
+    </div>
      
 
           <fieldset disabled={isSubmitting}>
@@ -682,8 +709,9 @@ const ContractsDao = () => {
           const forVotes = event.ProposalVotes?.forVotes.toString() ?? '0';
           const abstainVotes = event.ProposalVotes?.abstainVotes.toString() ?? '0';
           const imageHash = event.imageHash?.imageHash.toString() ?? '';
-          const imageUrl = `https://ipfs.io/ipfs/${imageHash}`;
-
+          //const imageUrl = `https://ipfs.io/ipfs/${imageHash}`;
+          const imageUrl = descriptionObj.imageUrl; // Assume imageUrl is a key in the description JSON
+          
           try {
             // Parse the description from the JSON string
             const descriptionObj = JSON.parse(event.description);

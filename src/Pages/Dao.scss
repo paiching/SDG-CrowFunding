@@ -137,6 +137,7 @@ button {
 
 .wrapper {
   margin-top: 50px;
+  margin-bottom: 30px;
 }
 
 .formContainer {
@@ -201,6 +202,25 @@ button {
 .pageHight {
   min-height: 600px;
 }
+
+.imageUploadPreview {
+  text-align: center;
+  margin-bottom: 20px; /* Space below the image or the prompt */
+  display: flex; /* Use flexbox for centering */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+  min-height: 150px; /* Minimum height to maintain layout consistency */
+  border: 1px dashed #ddd; /* Optional: style to indicate this is the upload area */
+  border-radius: 4px; /* Optional: rounded corners for the upload area */
+  background-color: #f9f9f9; /* Light grey background */
+}
+
+.uploadedImage {
+  max-width: 500px; /* Image can be as wide as its container but no wider */
+  height: auto; /* Height is set automatically to keep aspect ratio */
+  margin: 0 auto; /* Center the image if it's not as wide as the container */
+}
+
 
 
 
